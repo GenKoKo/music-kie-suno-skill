@@ -2,47 +2,33 @@
 
 All notable changes to this skill are documented here.
 
-## 0.4.0 — 2026-09-11 (unreleased; supersedes the draft 0.3.1 — the changeset outgrew a patch bump)
+## 0.5.0 — unreleased (breaking: V6 jobs API migration; supersedes the never-released 0.4.0 draft — that draft targeted the V5_5 API, which KIE.AI has since discontinued)
 
-- Onboarding walkthrough feedback:
-  - Registration needs no password — register/sign in directly with Google or Microsoft SSO
-  - Top-up pricing table with date: $5 = 1,000 credits / $50 = 10,000 credits / $500+ comes with bonus credits (official Billing page always takes precedence)
-  - Japanese UI menu names noted (Billing / Top-up → 「請求情報」, API key → 「APIキー」)
-  - Step 3 now states the API key body is shown in the Default row with one-click copy
-  - Step 2: noted Apple Pay support (card number is not disclosed to the merchant)
-  - Step 2: stated credits never expire, deferring to the official Billing page for the latest terms
-  - suno.js: client-side submit pacing — sliding window capped at 20 requests / 10 s (official account limit); large plans batch automatically instead of firing all requests at once. Credit pre-check (abort before any spend when balance < estimated total) already enforced fail-closed, now documented in SKILL.md
-  - SKILL.md: referral and billing links default to the Japanese locale; non-Japanese variants only when the user clearly communicates in another language
-  - suno.js: parsePlan now warns when V5_5 has no duration (defaults to a ~20s short track) and rejects vocal entries without lyrics
-  - suno.js: submit pacing margin — 18 requests / 10 s (official cap 20) to coexist with manual web generation; `--lang` documented in usage text
-  - Docs: failed requests consume no credits and per-request cost is uniform across models (verified 2026-09-11); agent OS detection for env-var instructions
-  - Assisted API-key setup: users may paste the key to the agent, which writes the env var (shell rc / setx), never echoes the key, and verifies the balance; documented in SKILL.md + both READMEs + the script setup guide
-  - SKILL.md: preflight now handles missing Node.js (install guidance incl. nodejs.org graphical installer for non-engineers) before key setup
-  - READMEs (Onboarding Step 3): no-Homebrew macOS path — one-line official .pkg install (curl latest v24 pkg + `sudo installer`, run in the user's Terminal for the password prompt; agent shells cannot answer sudo) alongside `brew install node`
-  - Platform retention (~14 days, then deleted): relayed in SKILL.md Step 9 and both READMEs; local output folder framed as the permanent copy, deferring to official policy
-  - V6 migration (operator-verified docs.kie.ai spec): jobs API — `POST /api/v1/jobs/createTask` with nested `{model: "ai-music-api/generate", callBackUrl, input}` snake_case payload, polling via `GET /api/v1/jobs/recordInfo`, `data.task_id` taskId parsing, completion via `data.state`, tracks read from the stringified `data.resultJson` payload (verified against a live request); plan model pinned to the V6 family — default **V6** (2026-09-12 listening test preferred its sound; V6_WILD = more variation, V6_MINI = lighter/faster — accepted on request); V3_5–V5_5 discontinued upstream; duration validated 10–360
-  - V6 timing: poll cap kept at 10 min (a 15-min trial was reverted as excessive; V6 360 s tracks observed 171–215 s live, slower than V5_5's 91 s median); per-family behavior table in SKILL.md — V6 honors duration, V6_WILD honors it but sounds hissy (not recommended; variation via style weights instead), V6_MINI fastest/lightest but ignores duration (returns ~half); recordInfo resultJson carries multiple inner shapes (data[] / resultObject.lyricsData) now parsed
-  - `usage.jsonl` schema pinned: per-field table in SKILL.md, `v: 1` marker written per line (pre-0.4.0 lines lack it); each line carries `tracks[]` objects `{file, title, url}` — per-track composed title and platform URL (valid within the ~14-day retention); track duration removed from filenames and usage entirely (simplification — durations varied by model and risked misleading users); plan gains optional `title2` (distinct composed name for the second track, fallback `_v2` suffix), implementing Step 4's varied-second-title intent; README filename format updated to match
-  - SKILL.md + README agent sections: track-count → request-count rule — when the user names a track count, convert to a request count (1 request = exactly 2 tracks) and confirm the rounding-up before composing the plan; never silently round
-  - READMEs: new "Agent quick start" section right after the intro — step-by-step autonomous install for the agent (Node.js/runtime detection first since `npx` requires Node, skill install, credit preflight, OS-aware assisted key setup, approval-gated generation, pointer to SKILL.md; silent skip when Node.js is present, choice of one-liner (sudo in user Terminal) or website installer matched to OS/CPU when missing); the human-facing guide is unchanged below it
-  - READMEs: end-to-end no-hesitation pass — Install section (`npx skills add`), post-setup verification line, first-run expectations (timing median 91 s, 2 tracks per request, output location, retry), Japanese-vocal cheat-sheet row
-  - SKILL.md: relay generation timing expectations (~1.5–2 min, median 91 s); past-run lookup via `status --dir <runDir>`
-  - Commercial-use FAQ: relay official sources only — KIE.AI ToS (https://kie.ai/terms-of-use, /ja variant; no explicit generated-music clause as of 2026-09-11) + Suno licensing (https://suno.com/help/licensing, paid tiers grant full commercial rights); suno.com added to the self-audit URL allowlist
-  - FAQ.md (ja): seed FAQ covering commercial use, billing, timing, output location, and troubleshooting — linked from both READMEs and SKILL.md, included in the self-audit URL allowlist; expandable per version
-  - suno.js: user-selectable output folder — asked once during onboarding (default = current behavior); custom path set via the `MUSIC_KIE_SUNO_OUT_DIR` environment variable (same agent-assisted flow as the API key), takes precedence over the git-project default, unsetting resets. Documented in SKILL.md, READMEs, and FAQ
-  - Output directory renamed `suno_kie/` → `music_kie_suno/` to match the skill name; 0.3.0 users can rename an existing folder by hand to carry over history (usage.jsonl, past runs)
-  - Output folder renamed `music_kie_suno/` → `output_music_kie_suno/` and env var renamed `MUSIC_KIE_SUNO_OUT_DIR` → `OUTPUT_DIR_MUSIC_KIE_SUNO` (purpose-first `OUTPUT_DIR_<skill>` naming; room for future series skills). Hard rename, no fallback alias — anyone who had set the old var must update it; .gitignore updated to match
-  - FAQ.md: digest of the official KIE.AI FAQ (ja) — failed tasks not charged, credits never expire, bonus credits, 80 free credits for new accounts (noted per the official FAQ; actual granting depends on registration), support/logs/pricing/invoice links, each marked （公式）; free-trial credits noted in README Step 2 (ja/en); SKILL.md support pointer updated to vip-support
-  - suno.js robustness: in-run credit refresh is now non-fatal and throttled to 60 s (a transient 5xx/network error no longer kills the polling loop); final settlement falls back to the last known balance
-  - suno.js: per-task poll timeout raised 5 → 10 min (queue margin); usage text documents MUSIC_KIE_SUNO_OUT_DIR
-  - FAQ + SKILL.md: service-interruption entry — KIE.AI server conditions can interrupt generation; retry later, failed requests are not charged
-  - Onboarding reordered for try-before-you-buy: register → API key → env setup → first track (possibly with free testing credits); card binding & top-up moved to a when-needed Step 5 — SKILL.md onboarding pointer, both READMEs, and a new FAQ entry updated
-  - suno.js: automatic update notice — the credit preflight compares the installed version (SKILL.md frontmatter) with the published repo main branch (raw.githubusercontent.com) and prints `UPDATE AVAILABLE` with the reinstall command; numeric-safe compare, silent on network failure; raw.githubusercontent.com added to the self-audit allowlist
-  - .gitignore: ignore runtime output (music_kie_suno/ + legacy suno_kie/) and .DS_Store so users running inside the repo never commit generated tracks or usage stats
-  - 80-credit notes unified everywhere: official claim — actual granting prevails; ~6 requests ≈ 12 tracks; top up first if not granted
-  - READMEs + SKILL.md: API-key setup now shows an assisted-vs-manual comparison (effort / best for / caveats); agents must detect OS and shell and present only the matching one-line command, with terminal-app guidance for non-engineers
-  - suno.js: insufficient-balance error now offers both remedies — trim the plan to the affordable request count (`floor(balance ÷ ~12)`) or top up at the billing page; the link defaults to the Japanese page (https://kie.ai/ja/billing — the skill targets Japanese users), `--lang en` switches to https://kie.ai/billing
-  - Windows env var: added PowerShell session-level `$env:KIE_AI_API_KEY` variant alongside persistent `setx`; noted agents detect the OS and show only the relevant commands
+### Breaking
+
+- V6 jobs API migration: `POST /api/v1/jobs/createTask` with the nested `{model: "ai-music-api/generate", callBackUrl, input}` snake_case payload; polling via `GET /api/v1/jobs/recordInfo`; taskId from `data.task_id`; completion via `data.state`; tracks parsed from the stringified `data.resultJson` payload (multiple inner shapes — `data[]` / `resultObject.lyricsData` — all parsed)
+- Model selection removed: pinned to the V6 family — default **V6** (2026-09-12 listening test; V6_WILD rejected — hissy artifacts, variation via style weights instead; V6_MINI selectable but ignores the requested duration, returning ~half). V3_5–V5_5 discontinued upstream
+- `usage.jsonl` schema v1: each line carries `tracks[]` objects `{file, title, url}` — per-track composed title + platform URL (valid within the ~14-day retention); track duration removed from filenames and usage entirely; optional plan `title2` names the second track (fallback `_v2` filename suffix)
+- Output folder renamed `music_kie_suno/` → `output_music_kie_suno/`; env var renamed `MUSIC_KIE_SUNO_OUT_DIR` → `OUTPUT_DIR_MUSIC_KIE_SUNO` (hard rename, no fallback alias; .gitignore updated; 0.3.x users can rename the old folder by hand to keep history)
+
+### Added
+
+- READMEs: agent quick start section — runtime detection (silent skip when Node.js is present; install choice: one-line .pkg with sudo in the user's Terminal, or website installer matched to OS/CPU), skill install, credit preflight, OS-aware assisted key setup, approval-gated generation, and the request-count conversion rule (1 request = exactly 2 tracks — confirm rounding)
+- READMEs: language switcher, version/OS/agent badges, V6-family support statement; cheat-sheet note on duration support
+- Platform retention (~14 days, then deleted) relayed in SKILL.md Step 9 and both READMEs — local output folder framed as the permanent copy (official policy takes precedence)
+- V6 family behavior table in SKILL.md: timing (171–215 s per 360 s request), actual durations, file sizes, track-delivery rhythm; poll cap kept at 10 min
+- Onboarding: try-before-you-buy reorder (card binding & top-up moved to a when-needed step); assisted-vs-manual key setup comparison; no-Homebrew one-line .pkg install alongside brew; Windows PowerShell session-level env variant; 80-free-credit notes unified (official claim — actual granting prevails)
+- suno.js: submit pacing 18 requests/10 s (official cap 20); fail-closed credit pre-check before any spend; insufficient-balance remedies (trim the plan or top up — ja-default billing link, `--lang en` switch); in-run credit refresh non-fatal and throttled; automatic update notice comparing the installed version against the published repo main
+- Assisted API-key setup: users may paste the key to the agent (writes the env var per OS/shell, never echoes it, verifies the balance)
+- Track download dedup by stable track id (V6_MINI live run exposed variant-index drift: track 1 fetched twice, track 0 skipped)
+
+### Changed
+
+- Onboarding walkthrough refreshed: SSO-only registration, top-up pricing table ($5 = 1,000 credits; official Billing page takes precedence), Japanese UI menu names, API key shown in the Default row with one-click copy, Apple Pay support, credits never expire
+- Referral and billing links default to the Japanese locale; non-Japanese variants only when the user clearly communicates in another language
+- Commercial-use FAQ relays official sources only (KIE.AI ToS + Suno licensing); FAQ digest of the official KIE.AI FAQ (failed tasks not charged, credits never expire, bonus/free credits, support links); service-interruption entry (retry later — failed requests are not charged)
+- Failed requests consume no credits; per-request cost uniform (operator-verified 2026-09-11); user-selectable output folder asked once during onboarding with env override
+- .gitignore covers runtime output and .DS_Store
 
 ## 0.3.0 — 2026-09-10
 
@@ -66,6 +52,6 @@ All notable changes to this skill are documented here.
 - Per-request plan files (markdown + embedded JSON)
 - Background execution with per-minute status tables (`status` command)
 - Instrumental presets: V5_5 (instrumental=true + duration 360) / below V5_5 (instrumental=false + [Instrumental Break] lyrics technique)
-- Auto-download with timestamped filenames (createTime-based) and usage.jsonl statistics
+- Auto-download with createTime-based filenames and usage.jsonl statistics
 - self-audit.sh safety assertions, bilingual README (ja/en)
 - Full parameter reference with per-model availability and style-variation levers
