@@ -95,7 +95,7 @@ Example derivation from one anchor (lo-fi jazz): swap instruments (`felt piano, 
 
 ## Step 3 — Pure-instrumental presets
 
-- **Default model V6_WILD** (maximizes variation under the same style; `V6` / `V6_MINI` on request): `instrumental: true`, `duration: 360` (the duration parameter controls length precisely — verified).
+- **Default model V6** (listening test 2026-09-12 preferred its sound over V6_WILD / V6_MINI): `instrumental: true`, `duration: 360` (the duration parameter controls length precisely — verified).
 
 ## Step 4 — Titles
 
@@ -184,7 +184,7 @@ The script submits to `POST /api/v1/jobs/createTask` with the wrapper `{ model: 
 | style | string | genre / instruments / tempo / mood; required |
 | title | string | track title; required |
 | title2 | string | skill-local: optional distinct composed name for the second track of the request (varied form of title; filename fallback: `_v2` suffix) |
-| model | enum | V6 / V6_MINI / V6_WILD — default V6_WILD (more variation under the same style); plan may pin another family member on request |
+| model | enum | V6 / V6_MINI / V6_WILD — default V6 (operator listening test preferred its sound); plan may pin another family member on request |
 | duration | number | audio length in seconds, 10–360 (default 20) |
 | negative_tags | string | styles/traits to exclude (comma-separated) |
 | vocal_gender | string | `m` / `f` vocal preference (custom_mode only; probabilistic) |
@@ -204,7 +204,7 @@ Active versions: V6 / V6_MINI / V6_WILD. V3_5 / V4 / V4_5* / V5 / V5_5 are disco
 | 2-track file size | 6.9 / 7.8 MB | 7.7 / 7.9 MB | 4.0 / 4.0 MB (lighter encode) |
 | track delivery | both in one poll cycle | both in one poll cycle | staggered across polls — track 0's `audio_url` can lag; handled by id-based dedup |
 
-Same endpoint, payload shape, and billing (12 credits) for the whole family; only `input.model` differs. Relay to users: MINI = fastest and lightest, WILD = most variation under the same style. Poll cap is 15 min per task.
+Same endpoint, payload shape, and billing (12 credits) for the whole family; only `input.model` differs. Relay to users: default is **V6** (operator listening test preferred its sound, 2026-09-12); MINI = fastest and lightest, WILD = most variation under the same style — both selectable on request. Poll cap is 15 min per task.
 
 ## Style variation levers (same style text)
 

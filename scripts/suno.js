@@ -199,7 +199,7 @@ function parsePlan(file) {
       if (seen[k2]) die('duplicate title in plan: ' + p.title2);
       seen[k2] = true;
     } else p.title2 = null;
-    p.model = V6_FAMILY.indexOf(p.model) !== -1 ? p.model : 'V6_WILD';
+    p.model = V6_FAMILY.indexOf(p.model) !== -1 ? p.model : 'V6';
     const lim = LIMITS.V6;
     if (!p.style) die('plan entry missing required "style" (title: ' + p.title + ')');
     if (p.style.length > lim.style) die('style too long (' + p.style.length + ' > ' + lim.style + ')');
