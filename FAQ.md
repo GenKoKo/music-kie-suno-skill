@@ -1,7 +1,7 @@
 # music-kie-suno FAQ（よくある質問）
 
 > 2026-09-11 時点の情報です。金額・規約は必ず公式ページの表記が優先されます。
-> 他に困ったことがあれば [GitHub](https://github.com/GenKoKo/music-kie-suno) までお知らせください。
+> 他に困ったことがあれば [GitHub](https://github.com/GenKoKo/music-kie-suno-skill) までお知らせください。
 
 ## 商用・権利
 

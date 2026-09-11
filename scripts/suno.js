@@ -19,7 +19,7 @@ const V6_FAMILY = ['V6', 'V6_MINI', 'V6_WILD'];
 const LIMITS = { V6: { prompt: 5000, style: 1000 } };
 const TITLE_LIMIT = 80;
 const CALLBACK_URL = 'https://example.com/suno-callback'; // required by API; we poll instead
-const SKILL_REPO = 'GenKoKo/music-kie-suno'; // published repo (skills.sh / GitHub) — confirm slug before release
+const SKILL_REPO = 'GenKoKo/music-kie-suno-skill'; // published repo (skills.sh / GitHub) — confirm slug before release
 
 const die = m => { console.error('ERROR: ' + m); process.exit(1); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
