@@ -151,6 +151,8 @@ Ask naturally, e.g. "generate 3 study BGM tracks with Suno" or "5 tracks, more e
 | Experimental        | 5 more tracks, same mood but more experimental arrangements |
 | Bulk                | 10 study BGM tracks, mood up to you                         |
 
+> Requested lengths are honored on V6 (the default); V6_MINI may ignore them.
+
 As long as the scene, mood, and track count come across, you are set. Vague is fine — the agent narrows it down with three questions (scene / mood / instruments & tempo), then proposes a plan and waits for your approval. Count, length, and estimated credits are always confirmed before anything runs.
 
 ## Direct commands
