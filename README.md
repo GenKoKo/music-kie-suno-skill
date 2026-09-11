@@ -1,6 +1,10 @@
 # music-kie-suno-skill
 
-> Version 0.4.0
+![Version](https://img.shields.io/badge/version-0.4.0-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+
+**言語 / Language**: 日本語（このページ）｜[English](README.en.md)
+
+> **対応モデル：V6 ファミリーのみ**（既定は V6。V6_MINI／V6_WILD も選択可）。旧バージョン（V3_5〜V5_5）は KIE.AI で提供終了のため非対応です。
 
 KIE.AI の Suno API を使って、AI 楽曲をバッチ生成するエージェントスキルです。**エンジニアでない方でも、この手順に沿って最初の1曲まで進められる**ように設計されています。生成そのものは AI エージェント（Claude Code / Codex / pi など）が行うので、人の作業はアカウント作成と初期設定だけです。
 

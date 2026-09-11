@@ -1,6 +1,10 @@
-# music-kie-suno
+# music-kie-suno-skill
 
-> Version 0.4.0
+![Version](https://img.shields.io/badge/version-0.4.0-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+
+**言語 / Language**: [日本語](README.md)｜English (this page)
+
+> **Supported models: the V6 family only** (default V6; V6_MINI / V6_WILD selectable). Older versions (V3_5–V5_5) are discontinued upstream and not supported.
 
 Batch-generate AI music through the KIE.AI Suno API. Designed so that **non-engineers can reach their first track** just by following this README — the actual generation is performed by your AI agent (Claude Code / Codex / pi, etc.).
 
