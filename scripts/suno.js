@@ -307,16 +307,19 @@ async function runGenerate(args) {
       r.stage = (j.data && (j.data.status || (j.data.state || '').toUpperCase())) || '';
       const sd = extractSunoData(j);
       if (sd && r.files.length < sd.length) {
-        for (let t = r.files.length; t < sd.length; t++) {
+        for (let t = 0; t < sd.length; t++) {
           const tr = sd[t] || {};
           const url = tr.audio_url || tr.source_audio_url || tr.audioUrl;
           if (!url) continue;
+          r.downloadedIds = r.downloadedIds || {};
+          if (tr.id && r.downloadedIds[tr.id]) continue;
           try {
             const bin = await getBinary(url);
             const nnn = nextNNN(outDir);
             const tTitle = t === 1 && r.title2 ? r.title2 : r.title;
             const fname = trackFilename(r.model, tr.createTime, nnn, tTitle, t === 1 && !r.title2 ? t : 0);
             fs.writeFileSync(path.join(outDir, fname), bin);
+            if (tr.id) r.downloadedIds[tr.id] = 1;
             r.files.push({ file: fname, title: tTitle, url, bytes: bin.length });
             log('[' + r.title + '] saved ' + fname + ' (' + (bin.length / 1048576).toFixed(1) + ' MB)');
           } catch (e) { log('[' + r.title + '] download failed: ' + e.message); }
