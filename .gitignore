@@ -1,0 +1,5 @@
+# runtime output (generated music, plans, status, usage stats)
+music_kie_suno/
+# legacy output root (v0.3.0)
+suno_kie/
+.DS_Store
