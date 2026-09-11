@@ -110,7 +110,7 @@ The agent walks through balance check → plan proposal → your approval → ge
 What the first run looks like:
 
 - After approval, generation starts and progress is reported as a table about once a minute
-- Each request takes ~1.5–2 minutes (measured 2026-09: median 91 s)
+- Each request takes ~3–4 minutes (V6, 360 s tracks: observed 171–215 s, 2026-09-12 — longer than the old V5_5)
 - Every request produces 2 tracks — keep the one you like
 - Finished mp3 files land in the `output_music_kie_suno/<date>/` folder; the agent tells you where
 - Generated audio is kept on the platform for only **~14 days**, then deleted. The local files in your output folder are the only permanent copy — back up tracks you care about (retention policy: always defer to the official pages)
@@ -137,7 +137,7 @@ Ask naturally, e.g. "generate 3 study BGM tracks with Suno" or "5 tracks, more e
 1. Check your credit balance
 2. Compose a generation plan (`plan.md`: track count, styles, estimated credits, current balance)
 3. Start the batch only after your approval
-4. Report a progress table every minute (~1.5–2 min per request)
+4. Report a progress table every minute (~3–4 min per request)
 5. Deliver the audio files and a report
 
 ## Phrase cheat sheet (copy & paste)

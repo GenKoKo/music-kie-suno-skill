@@ -138,7 +138,7 @@ Note the run directory from the output. Balance errors show the Japanese billing
 node scripts/suno.js status
 ```
 
-Relay the markdown table to the user each time (statuses: `queued` → `submitted` → `PENDING` / `TEXT_SUCCESS` / `FIRST_SUCCESS` → `done` / `failed`, with downloaded files listed). Repeat until `ALL_REQUESTS_FINISHED`. Expectation to relay: ~1.5–2 minutes per request (median 91 s, measured 2026-09).
+Relay the markdown table to the user each time (statuses: `queued` → `submitted` → `PENDING` / `TEXT_SUCCESS` / `FIRST_SUCCESS` → `done` / `failed`, with downloaded files listed). Repeat until `ALL_REQUESTS_FINISHED`. Expectation to relay: the V6 family takes ~3–4 minutes per 360 s request (observed 171–215 s across V6_MINI / V6 / V6_WILD, 2026-09-12) — noticeably longer than the discontinued V5_5 (median 91 s); the poll timeout is 15 min per task, so a slow queue is not yet a failure.
 
 ## Step 9 — Delivery
 
@@ -195,6 +195,16 @@ The script submits to `POST /api/v1/jobs/createTask` with the wrapper `{ model: 
 | callBackUrl | string | wrapper field (camelCase, outside `input`); required by API, this skill polls instead |
 
 Active versions: V6 / V6_MINI / V6_WILD. V3_5 / V4 / V4_5* / V5 / V5_5 are discontinued and no longer accepted by this skill.
+
+### V6 family observed behavior (live run 2026-09-12, one 360 s instrumental request each)
+
+| | V6_WILD (default) | V6 | V6_MINI |
+|---|---|---|---|
+| generation wall time | 215 s | 198 s | 171 s |
+| 2-track file size | 6.9 / 7.8 MB | 7.7 / 7.9 MB | 4.0 / 4.0 MB (lighter encode) |
+| track delivery | both in one poll cycle | both in one poll cycle | staggered across polls — track 0's `audio_url` can lag; handled by id-based dedup |
+
+Same endpoint, payload shape, and billing (12 credits) for the whole family; only `input.model` differs. Relay to users: MINI = fastest and lightest, WILD = most variation under the same style. Poll cap is 15 min per task.
 
 ## Style variation levers (same style text)
 
