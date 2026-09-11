@@ -1,0 +1,4 @@
+#!/bin/sh
+# secret scan on staged changes (gitleaks v8.19+ syntax)
+export PATH="/opt/homebrew/bin:$PATH"
+gitleaks git --pre-commit --staged --verbose
