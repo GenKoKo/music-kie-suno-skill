@@ -8,7 +8,6 @@ const { spawn } = require('child_process');
 
 const API = 'https://api.kie.ai';
 const KEY_ENV = 'KIE_AI_API_KEY';
-const DEFAULT_MODEL = 'V5_5';
 const CREDIT_REF_PER_REQUEST = 12;
 const POLL_INTERVAL_MS = 5000;
 const POLL_CAP_MS = 600000; // per-task poll timeout (p50 ~91s; leave queue margin)
@@ -16,12 +15,8 @@ const CREDIT_REFRESH_MS = 60000;
 const PROGRESS_EVERY_MS = 60000;
 const SUBMIT_RETRIES = 2;
 const SUBMIT_PACING = { maxPerWindow: 18, windowMs: 10000 }; // official limit 20 new requests / 10 s; 18 leaves margin for concurrent web use
-const KNOWN_MODELS = ['V3_5', 'V4', 'V4_5', 'V4_5PLUS', 'V4_5ALL', 'V5', 'V5_5'];
-const LIMITS = {
-  V4: { prompt: 3000, style: 200 },
-  V4_5: { prompt: 5000, style: 1000 }, V4_5PLUS: { prompt: 5000, style: 1000 }, V4_5ALL: { prompt: 5000, style: 1000 },
-  V5: { prompt: 5000, style: 1000 }, V5_5: { prompt: 5000, style: 1000 },
-};
+const V6_FAMILY = ['V6', 'V6_MINI', 'V6_WILD'];
+const LIMITS = { V6: { prompt: 5000, style: 1000 } };
 const TITLE_LIMIT = 80;
 const CALLBACK_URL = 'https://example.com/suno-callback'; // required by API; we poll instead
 const SKILL_REPO = 'GenKoKo/music-kie-suno'; // published repo (skills.sh / GitHub) — confirm slug before release
@@ -31,7 +26,6 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const pad2 = n => String(n).padStart(2, '0');
 const pad3 = n => String(n).padStart(3, '0');
 const stampParts = d => { d = d || new Date(); return { date: String(d.getFullYear()).slice(2) + pad2(d.getMonth() + 1) + pad2(d.getDate()), time: pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()) }; };
-const fmtDur = s => { const w = Math.round(s || 0); return Math.floor(w / 60) + 'm' + pad2(w % 60) + 's'; };
 const sanitize = t => String(t).replace(/[^\w\s]/g, '').trim().replace(/\s+/g, '_').slice(0, 40) || 'track';
 const log = m => console.log('[' + new Date().toISOString() + '] ' + m);
 
@@ -135,7 +129,7 @@ function insufficientMsg(bal, est, n, billingUrl) {
 async function submit(body, key) {
   for (let attempt = 0; ; attempt++) {
     let r;
-    try { r = await call('POST', API + '/api/v1/generate', body, key); }
+    try { r = await call('POST', API + '/api/v1/jobs/createTask', body, key); }
     catch (e) { r = { code: 0, json: null, raw: String(e.message || e) }; }
     const retriable = r.code === 429 || r.code === 0 || (r.code >= 500 && r.code <= 599);
     if (!retriable || attempt >= SUBMIT_RETRIES) return r;
@@ -167,21 +161,21 @@ function gitRoot() {
   }
 }
 function baseDir() {
-  const out = process.env.MUSIC_KIE_SUNO_OUT_DIR; // agent-assisted custom output root (absolute path)
+  const out = process.env.OUTPUT_DIR_MUSIC_KIE_SUNO; // agent-assisted custom output root (absolute path)
   if (out && out.trim()) return out.trim();
   return gitRoot() || os.homedir() + path.sep + 'Documents';
 }
-function sunoRoot() { return path.join(baseDir(), 'music_kie_suno'); }
+function sunoRoot() { return path.join(baseDir(), 'output_music_kie_suno'); }
 function todayDir() { return path.join(sunoRoot(), stampParts().date); }
 function nextNNN(dir) {
   let max = 0;
   if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) { const m = f.match(/^suno-.+-(\d{3})-[^-]+\.mp3$/); if (m) max = Math.max(max, parseInt(m[1], 10)); }
   return max + 1;
 }
-function trackFilename(model, durSec, createdAtMs, nnn, title, variantIdx) {
+function trackFilename(model, createdAtMs, nnn, title, variantIdx) {
   const ct = createdAtMs ? new Date(createdAtMs) : new Date();
   const s = stampParts(ct);
-  return 'suno-' + model + '-' + fmtDur(durSec) + '-' + s.date + '-' + s.time + '-' + pad3(nnn) + '-' + sanitize(title) + (variantIdx === 0 ? '' : '_v' + (variantIdx + 1)) + '.mp3';
+  return 'suno-' + model + '-' + s.date + '-' + s.time + '-' + pad3(nnn) + '-' + sanitize(title) + (variantIdx === 0 ? '' : '_v' + (variantIdx + 1)) + '.mp3';
 }
 
 function parsePlan(file) {
@@ -199,14 +193,18 @@ function parsePlan(file) {
     const k = p.title.toLowerCase();
     if (seen[k]) die('duplicate title in plan: ' + p.title);
     seen[k] = true;
-    p.model = p.model || DEFAULT_MODEL;
-    if (KNOWN_MODELS.indexOf(p.model) === -1) die('unknown model: ' + p.model);
-    const lim = LIMITS[p.model] || LIMITS.V5_5;
+    if (p.title2) {
+      if (p.title2.length > TITLE_LIMIT) die('title2 too long (' + p.title2.length + ' > ' + TITLE_LIMIT + '): ' + p.title2);
+      const k2 = p.title2.toLowerCase();
+      if (seen[k2]) die('duplicate title in plan: ' + p.title2);
+      seen[k2] = true;
+    } else p.title2 = null;
+    p.model = V6_FAMILY.indexOf(p.model) !== -1 ? p.model : 'V6_WILD';
+    const lim = LIMITS.V6;
     if (!p.style) die('plan entry missing required "style" (title: ' + p.title + ')');
-    if (p.style.length > lim.style) die('style too long for ' + p.model + ' (' + p.style.length + ' > ' + lim.style + ')');
-    if (p.lyrics && p.lyrics.length > lim.prompt) die('lyrics too long for ' + p.model + ' (' + p.lyrics.length + ' > ' + lim.prompt + ')');
-    if (p.duration && p.model !== 'V5_5') { log('WARN: duration is only effective on V5_5; ignoring for ' + p.title); p.duration = null; }
-    if (p.model === 'V5_5' && !p.duration) log('WARN: no duration set for ' + p.title + ' — V5_5 defaults to a ~20s short track; add "duration": 360 unless a short track is intended');
+    if (p.style.length > lim.style) die('style too long (' + p.style.length + ' > ' + lim.style + ')');
+    if (p.lyrics && p.lyrics.length > lim.prompt) die('lyrics too long (' + p.lyrics.length + ' > ' + lim.prompt + ')');
+    if (p.duration && (p.duration < 10 || p.duration > 360)) die('duration must be 10-360 seconds (title: ' + p.title + ')');
     if (!p.instrumental && !p.lyrics) die('plan entry requires "lyrics" when instrumental is not true (title: ' + p.title + ')');
     for (const w of ['styleWeight', 'weirdnessConstraint', 'audioWeight']) if (p[w] != null && (typeof p[w] !== 'number' || p[w] < 0 || p[w] > 1)) die(w + ' must be a number between 0 and 1');
   }
@@ -214,25 +212,26 @@ function parsePlan(file) {
 }
 
 function requestBody(entry) {
-  const b = { customMode: true, model: entry.model, style: entry.style, title: entry.title, instrumental: !!entry.instrumental, callBackUrl: CALLBACK_URL };
-  if (entry.instrumental === false || entry.lyrics) b.prompt = entry.lyrics || '';
-  if (entry.duration && entry.model === 'V5_5') b.duration = entry.duration;
-  if (entry.lyrics) b.prompt = entry.lyrics;
-  for (const w of ['styleWeight', 'weirdnessConstraint', 'audioWeight']) if (entry[w] != null) b[w] = entry[w];
-  if (entry.negativeTags) b.negativeTags = entry.negativeTags;
-  if (entry.vocalGender) b.vocalGender = entry.vocalGender;
-  return b;
+  const input = { custom_mode: true, model: entry.model, style: entry.style, title: entry.title, instrumental: !!entry.instrumental };
+  if (entry.instrumental === false || entry.lyrics) input.prompt = entry.lyrics || '';
+  if (entry.lyrics) input.prompt = entry.lyrics;
+  if (entry.duration) input.duration = entry.duration;
+  for (const pair of [['styleWeight', 'style_weight'], ['weirdnessConstraint', 'weirdness_constraint'], ['audioWeight', 'audio_weight']]) if (entry[pair[0]] != null) input[pair[1]] = entry[pair[0]];
+  if (entry.negativeTags) input.negative_tags = entry.negativeTags;
+  if (entry.vocalGender) input.vocal_gender = entry.vocalGender;
+  if (entry.personaId) input.persona_id = entry.personaId;
+  return { model: 'ai-music-api/generate', callBackUrl: CALLBACK_URL, input };
 }
 
 function newStatus(plan, outDir) {
-  return { startedAt: new Date().toISOString(), outDir: outDir, planFile: null, credits: { start: null, last: null }, requests: plan.map(p => ({ title: p.title, model: p.model, instrumental: !!p.instrumental, status: 'queued', taskId: null, stage: '', submittedAt: null, completedAt: null, elapsedSec: null, files: [], error: null })) };
+  return { startedAt: new Date().toISOString(), outDir: outDir, planFile: null, credits: { start: null, last: null }, requests: plan.map(p => ({ title: p.title, title2: p.title2 || null, model: p.model, instrumental: !!p.instrumental, status: 'queued', taskId: null, stage: '', submittedAt: null, completedAt: null, elapsedSec: null, files: [], error: null })) };
 }
 function saveStatus(st, outDir) { st.updatedAt = new Date().toISOString(); fs.writeFileSync(path.join(outDir, 'status.json'), JSON.stringify(st, null, 2)); }
 function renderTable(st) {
   const lines = ['| # | title | status | detail |', '|---|---|---|---|'];
   st.requests.forEach((r, i) => {
     let detail = '';
-    if (r.status === 'done') detail = r.files.map(f => f.file + ' (' + fmtDur(f.durationSec) + ')').join('<br>');
+    if (r.status === 'done') detail = r.files.map(f => f.file).join('<br>');
     else if (r.status === 'failed') detail = r.error || 'failed';
     else detail = (r.stage || r.status) + (r.files.length ? ' | ' + r.files.map(f => f.file).join('<br>') : '');
     lines.push('| ' + (i + 1) + ' | ' + r.title + ' | ' + r.status + ' | ' + detail + ' |');
@@ -245,6 +244,7 @@ function renderTable(st) {
 function extractSunoData(j) {
   const d = j && j.data;
   if (d && d.response && Array.isArray(d.response.sunoData)) return d.response.sunoData;
+  if (d && typeof d.resultJson === 'string') { try { const rj = JSON.parse(d.resultJson); if (Array.isArray(rj.data)) return rj.data; } catch (e) {} }
   if (Array.isArray(d)) return d;
   if (d && Array.isArray(d.tracks)) return d.tracks;
   return null;
@@ -276,7 +276,7 @@ async function runGenerate(args) {
   await Promise.all(plan.map(async (p, i) => {
     await acquireSubmitSlot();
     const r = await submit(bodies[i], key);
-    const taskId = r.json && r.json.data && r.json.data.taskId;
+    const taskId = r.json && r.json.data && (r.json.data.task_id || r.json.data.taskId);
     st.requests[i].submittedAt = new Date().toISOString();
     if (r.code !== 200 || !taskId) {
       st.requests[i].status = 'failed'; st.requests[i].error = 'submit failed HTTP ' + r.code + ': ' + r.raw;
@@ -301,10 +301,10 @@ async function runGenerate(args) {
       if (elapsed > POLL_CAP_MS) { r.status = 'failed'; r.error = 'poll timeout after ' + POLL_CAP_MS / 1000 + 's'; continue; }
       pending++;
       let resp;
-      try { resp = await call('GET', API + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(r.taskId), null, key); } catch (e) { continue; }
+      try { resp = await call('GET', API + '/api/v1/jobs/recordInfo?taskId=' + encodeURIComponent(r.taskId), null, key); } catch (e) { continue; }
       if (resp.code !== 200 || !resp.json) continue;
       const j = resp.json;
-      r.stage = (j.data && j.data.status) || '';
+      r.stage = (j.data && (j.data.status || (j.data.state || '').toUpperCase())) || '';
       const sd = extractSunoData(j);
       if (sd && r.files.length < sd.length) {
         for (let t = r.files.length; t < sd.length; t++) {
@@ -314,9 +314,10 @@ async function runGenerate(args) {
           try {
             const bin = await getBinary(url);
             const nnn = nextNNN(outDir);
-            const fname = trackFilename(r.model, tr.duration, tr.createTime, nnn, r.title, t);
+            const tTitle = t === 1 && r.title2 ? r.title2 : r.title;
+            const fname = trackFilename(r.model, tr.createTime, nnn, tTitle, t === 1 && !r.title2 ? t : 0);
             fs.writeFileSync(path.join(outDir, fname), bin);
-            r.files.push({ file: fname, durationSec: tr.duration || null, bytes: bin.length });
+            r.files.push({ file: fname, title: tTitle, url, bytes: bin.length });
             log('[' + r.title + '] saved ' + fname + ' (' + (bin.length / 1048576).toFixed(1) + ' MB)');
           } catch (e) { log('[' + r.title + '] download failed: ' + e.message); }
         }
@@ -343,7 +344,7 @@ async function runGenerate(args) {
   saveStatus(st, outDir);
   const lines = ['# generation report', '', '- finished: ' + new Date().toISOString(), '- credits: ' + bal0 + ' -> ' + st.credits.last + ' (used ' + (bal0 - st.credits.last).toFixed(2) + ')', '', renderTable(st)];
   fs.writeFileSync(path.join(outDir, 'report.md'), lines.join('\n') + '\n');
-  const usage = st.requests.map(r => JSON.stringify({ at: new Date().toISOString(), title: r.title, taskId: r.taskId, status: r.status, elapsedSec: r.elapsedSec, files: (r.files || []).map(f => f.file), durationsSec: (r.files || []).map(f => f.durationSec) }));
+  const usage = st.requests.map(r => JSON.stringify({ v: 1, at: new Date().toISOString(), title: r.title, taskId: r.taskId, status: r.status, elapsedSec: r.elapsedSec, tracks: (r.files || []).map(f => ({ file: f.file, title: f.title, url: f.url || null })) }));
   fs.appendFileSync(path.join(sunoRoot(), 'usage.jsonl'), usage.join('\n') + '\n');
   log('REPORT_READY: ' + path.join(outDir, 'report.md'));
 }
@@ -393,7 +394,7 @@ function parseArgs(argv) {
   }
   else if (cmd === 'status') statusCmd(args);
   else {
-    console.log('Usage:\n  node suno.js credit                          – check remaining credits\n  node suno.js generate --plan <plan.md>       – print confirmation summary (no spend)\n  node suno.js generate --plan <plan.md> --yes --bg [--lang en]  – execute batch in background (billing link defaults to ja; --lang en for English)\n  node suno.js status [--dir <runDir>]         – render current batch status table\n  Env: KIE_AI_API_KEY (required) | MUSIC_KIE_SUNO_OUT_DIR (optional custom output root)');
+    console.log('Usage:\n  node suno.js credit                          – check remaining credits\n  node suno.js generate --plan <plan.md>       – print confirmation summary (no spend)\n  node suno.js generate --plan <plan.md> --yes --bg [--lang en]  – execute batch in background (billing link defaults to ja; --lang en for English)\n  node suno.js status [--dir <runDir>]         – render current batch status table\n  Env: KIE_AI_API_KEY (required) | OUTPUT_DIR_MUSIC_KIE_SUNO (optional custom output root)');
     if (cmd) die('unknown command: ' + cmd);
     process.exit(cmd ? 1 : 0);
   }

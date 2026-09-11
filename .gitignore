@@ -1,14 +1,12 @@
 # runtime output (generated music, plans, status, usage stats)
-music_kie_suno/
-# legacy output root (v0.3.0)
-suno_kie/
-.DS_Store
+output_music_kie_suno/
 
 # local agent/editor config (author-side helpers, not part of the published skill)
 AGENTS.md
 CLAUDE.md
 .claude/
 .codex/
+.omc/
 .pi/
 .vscode/
 .idea/
