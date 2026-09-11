@@ -3,3 +3,13 @@ music_kie_suno/
 # legacy output root (v0.3.0)
 suno_kie/
 .DS_Store
+
+# local agent/editor config (author-side helpers, not part of the published skill)
+AGENTS.md
+CLAUDE.md
+.claude/
+.codex/
+.pi/
+.vscode/
+.idea/
+*.swp
