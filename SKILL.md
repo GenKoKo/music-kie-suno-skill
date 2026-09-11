@@ -2,7 +2,7 @@
 name: music-kie-suno
 description: Batch-generate AI music via the KIE.AI Suno API with credit-aware preflight, user-confirmed generation plans, live per-track progress tables, and auto-download with timestamped filenames. Use when the user wants to create songs, BGM, or instrumental tracks with Suno or KIE (e.g., "Sunoで曲を作って", "BGM生成して", "generate music with Suno", "作業用BGMを作って").
 metadata:
-  version: 0.5.0
+  version: 0.5.1
 ---
 
 # Suno (KIE.AI) batch music generation
@@ -17,7 +17,7 @@ Generate music in batch through the KIE.AI Suno API. Credit-safe by design: pref
 
 ## Step 0 — Preflight (every activation)
 
-Run:
+Run (from the skill's install directory — e.g. `.agents/skills/music-kie-suno/` — or pass the full path to `scripts/suno.js`):
 
 ```bash
 node scripts/suno.js credit

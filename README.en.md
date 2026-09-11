@@ -1,6 +1,6 @@
 # music-kie-suno-skill
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+![Version](https://img.shields.io/badge/version-0.5.1-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
 ![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **言語 / Language**: [日本語](README.md)｜English (this page)
@@ -16,8 +16,8 @@ Common questions (commercial use, billing, troubleshooting) are collected in [FA
 If you are an AI agent (Claude Code / Codex / pi, etc.) whose user just asked to "create songs with Suno", follow this section in order. The user is typically a non-engineer: run every terminal step yourself and only ask them for decisions (approval, billing).
 
 1. **Detect the runtime environment.** Check for Node.js with `node --version`. **If Node.js is present, skip this step silently** — do not bring up installation. `npx` ships with Node.js, so without Node neither the install nor the skill can run. If missing, detect the user's OS and install it: macOS → `brew install node` if Homebrew exists; otherwise have the user run the one-line official .pkg command from Step 3 in their own Terminal (`sudo` needs their password, so your shell cannot run it); Windows (PowerShell) → `winget install OpenJS.NodeJS.LTS`. If the user prefers downloading from the website, point them to the official LTS installer at nodejs.org/en/download matching their OS and CPU (macOS: universal .pkg for Apple Silicon and Intel; Windows: x64 .msi). Then re-check.
-2. **Install the skill.** Run `npx skills add GenKoKo/music-kie-suno-skill` yourself (do not ask the user to).
-3. **Run the preflight.** From the skill directory run `node scripts/suno.js credit`. It doubles as a balance report, a service health check, and an update notice (if it prints `UPDATE AVAILABLE`, suggest updating via `npx skills add GenKoKo/music-kie-suno-skill`). Relay the output to the user. If it prints the setup guide, relay it verbatim and follow it.
+2. **Install the skill.** Run `npx skills add GenKoKo/music-kie-suno-skill` yourself (do not ask the user to). It installs into `./.agents/skills/music-kie-suno/` relative to your current directory (skills.sh default).
+3. **Run the preflight.** From `.agents/skills/music-kie-suno/` run `node scripts/suno.js credit`. It doubles as a balance report, a service health check, and an update notice (if it prints `UPDATE AVAILABLE`, suggest updating via `npx skills add GenKoKo/music-kie-suno-skill`). Relay the output to the user. If it prints the setup guide, relay it verbatim and follow it.
 4. **Onboard a first-time user.** If they have no account or API key, walk them through Onboarding Steps 1–2 below (registration link defaults to the Japanese locale: `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8`). Then set the key for them after detecting their OS and shell: macOS / Linux → persistent `export` in `~/.zshrc` (or the user's rc); Windows → `setx` (persistent) or `$env:` (current session only). If the user pastes the key in chat, never echo it back; mention once that it transited chat and can be regenerated at https://kie.ai/ja/api-key.
 5. **Generate.** On a natural-language request (e.g. "create 2 BGM tracks with Suno"): check the balance → propose a generation plan → get the user's explicit approval (nothing is spent before approval) → run the batch → report progress and deliver the files. If the user speaks in track counts, convert to a request count before planning — **1 request = exactly 2 tracks** (two versions of the same plan entry), e.g. "3 tracks" → 2 requests = 4 tracks — and confirm the conversion with the user. The full operational contract lives in `SKILL.md` — read it before your first generation.
 
@@ -30,6 +30,8 @@ npx skills add GenKoKo/music-kie-suno-skill
 ```
 
 GitHub: **https://github.com/GenKoKo/music-kie-suno-skill**
+
+After installing, run the commands (credit / generate / status) from that install folder (`.agents/skills/music-kie-suno/`). From anywhere else, point at the script explicitly (`node <install-dir>/scripts/suno.js …`).
 
 Works with skill-aware agents (Claude Code / Codex / pi). If a newer version is published, the first balance check reports it automatically. No post-install setup — on first invocation the agent starts with a balance check, and if you have no account or key yet, it walks you through the Onboarding below first.
 
@@ -161,6 +163,8 @@ Ask naturally, e.g. "generate 3 study BGM tracks with Suno" or "5 tracks, more e
 As long as the scene, mood, and track count come across, you are set. Vague is fine — the agent narrows it down with three questions (scene / mood / instruments & tempo), then proposes a plan and waits for your approval. Count, length, and estimated credits are always confirmed before anything runs.
 
 ## Direct commands
+
+The commands below assume you are inside the install folder (`.agents/skills/music-kie-suno/`). From anywhere else, pass the full path (`node <install-dir>/scripts/suno.js …`).
 
 ```bash
 node scripts/suno.js credit

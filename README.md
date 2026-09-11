@@ -1,6 +1,6 @@
 # music-kie-suno-skill
 
-![Version](https://img.shields.io/badge/version-0.5.0-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+![Version](https://img.shields.io/badge/version-0.5.1-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
 ![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **言語 / Language**: 日本語（このページ）｜[English](README.en.md)
@@ -16,8 +16,8 @@ KIE.AI の Suno API を使って、AI 楽曲をバッチ生成するエージェ
 あなたが AI エージェント（Claude Code / Codex / pi など）で、「Suno で曲を作って」という依頼を受けたなら、この節に沿って実行してください。ユーザーは多くの場合エンジニアではないため、ターミナル操作はすべてエージェント側で行い、ユーザーには意思決定（承認・課金）だけを頼みます。
 
 1. **実行環境の検出**：`node --version` で Node.js の有無を確認します。**Node.js がある場合、このステップは黙ってスキップします**（インストールの話は切り出さない）。`npx` は Node.js に同梱されているため、Node がなければインストールもスキルの実行もできません。未インストールの場合は、ユーザーの OS を判定してインストールします：macOS → Homebrew があれば `brew install node`、なければ下の Step 3 の一行コマンド（公式 .pkg）をユーザーのターミナルで実行してもらいます（`sudo` のパスワード入力が必要なため、エージェント自身のシェルからは実行できません）；Windows（PowerShell）→ `winget install OpenJS.NodeJS.LTS`。サイトからの入手を希望する場合は、ユーザーの OS・CPU に合う公式インストーラ（macOS：.pkg ユニバーサル版／Windows：x64 の .msi。https://nodejs.org/en/download ）を案内します。インストール後、再確認します。
-2. **スキルのインストール**：`npx skills add GenKoKo/music-kie-suno-skill` をエージェント自身が実行します（ユーザーに実行させない）。
-3. **プレフライト**：スキルのディレクトリで `node scripts/suno.js credit` を実行します。残高表示・サービス死活確認・更新通知（`UPDATE AVAILABLE` 表示時は `npx skills add GenKoKo/music-kie-suno-skill` での更新を提案）を兼ねます。出力はユーザーにそのまま伝えます。セットアップガイドが表示された場合は、それをそのまま伝えて案内に従います。
+2. **スキルのインストール**：`npx skills add GenKoKo/music-kie-suno-skill` をエージェント自身が実行します（ユーザーに実行させない）。インストール先はカレントディレクトリの `.agents/skills/music-kie-suno/`（skills.sh の既定動作）
+3. **プレフライト**：`.agents/skills/music-kie-suno/` で `node scripts/suno.js credit` を実行します。残高表示・サービス死活確認・更新通知（`UPDATE AVAILABLE` 表示時は `npx skills add GenKoKo/music-kie-suno-skill` での更新を提案）を兼ねます。出力はユーザーにそのまま伝えます。セットアップガイドが表示された場合は、それをそのまま伝えて案内に従います。
 4. **初回ユーザーのオンボーディング**：アカウント・API キーが未設定なら、下の Onboarding Step 1–2 を案内します（登録リンクは既定で日本語ロケール `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8` を使います）。キーの設定は OS とシェルを判定してエージェントが代行します：macOS / Linux → `~/.zshrc` などへの恒久 `export`；Windows → `setx`（恒久）または `$env:`（現在のセッションのみ）。ユーザーがキーをチャットに貼った場合は、返信にキーを表示せず、チャットを経由した旨を一度だけ伝えます（あとで https://kie.ai/ja/api-key でキーを再作成すれば無効化できます）。
 5. **生成**：自然言語の依頼（例：「Suno で BGM を 2 曲」）を受けたら、残高確認 → 生成プランの提示 → ユーザーの明示的な承認（承認前にクレジットは一切消費しない）→ バッチ生成 → 進捗報告とファイル納品、の順で進めます。ユーザーが曲数で指定した場合は、**1 リクエスト＝2 曲**（同一プランの 2 バージョン）であるため、リクエスト数に換算して（例：「3 曲」→ 2 リクエスト＝4 曲）プラン作成前に必ず確認します。完全な操作契約は `SKILL.md` にあるため、初回生成前に必ず読んでください。
 
@@ -30,6 +30,8 @@ npx skills add GenKoKo/music-kie-suno-skill
 ```
 
 GitHub: **https://github.com/GenKoKo/music-kie-suno-skill**
+
+インストール後の各コマンド（credit / generate / status）は、このインストール先フォルダ（`.agents/skills/music-kie-suno/`）に移動して実行してください。別のフォルダから実行する場合は、スクリプトのフルパス指定（`node <インストール先>/scripts/suno.js …`）が必要です。
 
 Claude Code / Codex / pi など skills に対応したエージェントで動作します。新しいバージョンが公開されている場合は、最初の残高確認時に自動的に通知されます。インストール後の設定は不要です。最初の呼び出し時にエージェントが残高確認から始め、アカウント未登録・キー未設定の場合はこの README の Onboarding を先に案内します。
 
@@ -161,6 +163,8 @@ $env:KIE_AI_API_KEY = "さっきコピーしたキー"
 「作りたいシーン」「雰囲気」「曲数」が伝わればOKです。曖昧な依頼でも大丈夫 — エージェントが3つの質問（シーン／気分／楽器とテンポ）で絞り込み、生成プランを提示して承認を待ちます。曲数・長さ・見積もりクレジットは必ず承認前に確認されます。
 
 ## 直接実行（コマンド）
+
+以下のコマンドはインストール先フォルダ（`.agents/skills/music-kie-suno/`）で実行する想定です。別フォルダからは `node <インストール先>/scripts/suno.js …` のようにフルパスで指定してください。
 
 ```bash
 node scripts/suno.js credit
