@@ -6,6 +6,18 @@ Batch-generate AI music through the KIE.AI Suno API. Designed so that **non-engi
 
 Common questions (commercial use, billing, troubleshooting) are collected in [FAQ.md](FAQ.md) (Japanese).
 
+## Agent quick start (this section is for the AI agent)
+
+If you are an AI agent (Claude Code / Codex / pi, etc.) whose user just asked to "create songs with Suno", follow this section in order. The user is typically a non-engineer: run every terminal step yourself and only ask them for decisions (approval, billing).
+
+1. **Detect the runtime environment.** Check for Node.js with `node --version`. **If Node.js is present, skip this step silently** — do not bring up installation. `npx` ships with Node.js, so without Node neither the install nor the skill can run. If missing, detect the user's OS and install it: macOS → `brew install node` if Homebrew exists; otherwise have the user run the one-line official .pkg command from Step 3 in their own Terminal (`sudo` needs their password, so your shell cannot run it); Windows (PowerShell) → `winget install OpenJS.NodeJS.LTS`. If the user prefers downloading from the website, point them to the official LTS installer at nodejs.org/en/download matching their OS and CPU (macOS: universal .pkg for Apple Silicon and Intel; Windows: x64 .msi). Then re-check.
+2. **Install the skill.** Run `npx skills add GenKoKo/music-kie-suno` yourself (do not ask the user to).
+3. **Run the preflight.** From the skill directory run `node scripts/suno.js credit`. It doubles as a balance report, a service health check, and an update notice (if it prints `UPDATE AVAILABLE`, suggest updating via `npx skills add GenKoKo/music-kie-suno`). Relay the output to the user. If it prints the setup guide, relay it verbatim and follow it.
+4. **Onboard a first-time user.** If they have no account or API key, walk them through Onboarding Steps 1–2 below (registration link defaults to the Japanese locale: `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8`). Then set the key for them after detecting their OS and shell: macOS / Linux → persistent `export` in `~/.zshrc` (or the user's rc); Windows → `setx` (persistent) or `$env:` (current session only). If the user pastes the key in chat, never echo it back; mention once that it transited chat and can be regenerated at https://kie.ai/ja/api-key.
+5. **Generate.** On a natural-language request (e.g. "create 2 BGM tracks with Suno"): check the balance → propose a generation plan → get the user's explicit approval (nothing is spent before approval) → run the batch → report progress and deliver the files. If the user speaks in track counts, convert to a request count before planning — **1 request = exactly 2 tracks** (two versions of the same plan entry), e.g. "3 tracks" → 2 requests = 4 tracks — and confirm the conversion with the user. The full operational contract lives in `SKILL.md` — read it before your first generation.
+
+Everything below is written for the human user (especially non-engineers). Read on if you want the details.
+
 ## Install
 
 ```bash
@@ -38,9 +50,17 @@ Works with skill-aware agents (Claude Code / Codex / pi). If a newer version is 
 Install Node.js if you do not have it:
 
 ```bash
-# macOS
+# macOS (with Homebrew)
 brew install node
 ```
+
+```bash
+# macOS (one line, no Homebrew needed: official .pkg)
+# You will be prompted for your Mac password (nothing shows while typing). Paste into Terminal and run
+cd /tmp && curl -fsSL https://nodejs.org/dist/latest-v24.x/ | grep -o 'node-v[0-9.]*\.pkg' | head -1 | xargs -I{} curl -fsSL -o node.pkg "https://nodejs.org/dist/latest-v24.x/{}" && sudo installer -pkg node.pkg -target /
+```
+
+**Prefer downloading from the website?** Open https://nodejs.org/en/download and pick the LTS build: on macOS choose **macOS Installer (.pkg)** (universal — Apple Silicon and Intel); on Windows choose **Windows Installer (.msi)** (x64). Not sure which file? Ask the agent — it detects your OS and CPU for you.
 
 ```bash
 # Windows (PowerShell)
@@ -49,10 +69,10 @@ winget install OpenJS.NodeJS.LTS
 
 There are two ways to set the API key — compare them and pick the one that suits you:
 
-| Method | Effort | Best for | Note |
-|---|---|---|---|
-| Let the agent do it | Minimal (paste + "set this up") | Quick starters; anyone unfamiliar with terminals | The key travels through chat (regenerating the key later invalidates it) |
-| Manual setup | One command you run yourself | Anyone who prefers not to send the key through chat | You must pick the command matching your OS and shell |
+| Method              | Effort                          | Best for                                            | Note                                                                     |
+| ------------------- | ------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| Let the agent do it | Minimal (paste + "set this up") | Quick starters; anyone unfamiliar with terminals    | The key travels through chat (regenerating the key later invalidates it) |
+| Manual setup        | One command you run yourself    | Anyone who prefers not to send the key through chat | You must pick the command matching your OS and shell                     |
 
 **Easy setup (let the agent do it)**: paste the copied API key into the chat and say "set this up for me" — the agent detects your OS and shell, writes the environment variable, and verifies the balance for you. The key is never echoed in replies and is stored nowhere but your shell config.
 
@@ -92,7 +112,8 @@ What the first run looks like:
 - After approval, generation starts and progress is reported as a table about once a minute
 - Each request takes ~1.5–2 minutes (measured 2026-09: median 91 s)
 - Every request produces 2 tracks — keep the one you like
-- Finished mp3 files land in the `music_kie_suno/<date>/` folder; the agent tells you where
+- Finished mp3 files land in the `output_music_kie_suno/<date>/` folder; the agent tells you where
+- Generated audio is kept on the platform for only **~14 days**, then deleted. The local files in your output folder are the only permanent copy — back up tracks you care about (retention policy: always defer to the official pages)
 - Don't like the results? Just ask again (~12 credits per request)
 
 ### Step 5 — Bind a card and top up credits (when needed)
@@ -102,6 +123,7 @@ After your free credits run out, or when you see the insufficient-balance prompt
 1. After logging in, open the **Billing / Top-up** page on the dashboard (shown as 「請求情報」 in the Japanese UI).
 2. Register a credit card (**Apple Pay** is supported — your card number is never shared with the merchant, so you can pay with peace of mind).
 3. Charge credits. Pricing guide (**as of 2026-09-11** — always defer to the official Billing page):
+
    - **$5 = 1,000 credits**
    - **$50 = 10,000 credits**
    - **$500+** top-ups come with bonus credits
@@ -120,14 +142,14 @@ Ask naturally, e.g. "generate 3 study BGM tracks with Suno" or "5 tracks, more e
 
 ## Phrase cheat sheet (copy & paste)
 
-| Goal | Phrase |
-|---|---|
-| First track | Generate a 6-minute study BGM track with Suno |
-| Specific mood | 3 calm late-night piano jazz BGM tracks |
-| Favorite instrument | 5 acoustic guitar folk tracks, instrumental |
-| Japanese vocals | One song with Japanese lyrics about the start of a journey |
-| Experimental | 5 more tracks, same mood but more experimental arrangements |
-| Bulk | 10 study BGM tracks, mood up to you |
+| Goal                | Phrase                                                      |
+| ------------------- | ----------------------------------------------------------- |
+| First track         | Generate a 6-minute study BGM track with Suno               |
+| Specific mood       | 3 calm late-night piano jazz BGM tracks                     |
+| Favorite instrument | 5 acoustic guitar folk tracks, instrumental                 |
+| Japanese vocals     | One song with Japanese lyrics about the start of a journey  |
+| Experimental        | 5 more tracks, same mood but more experimental arrangements |
+| Bulk                | 10 study BGM tracks, mood up to you                         |
 
 As long as the scene, mood, and track count come across, you are set. Vague is fine — the agent narrows it down with three questions (scene / mood / instruments & tempo), then proposes a plan and waits for your approval. Count, length, and estimated credits are always confirmed before anything runs.
 
@@ -151,15 +173,16 @@ node scripts/suno.js status
 
 ## Output and naming
 
-- Output: `<project>/music_kie_suno/<YYMMDD>/` inside a project, otherwise `~/Documents/music_kie_suno/<YYMMDD>/`
-- The output folder is chosen on first use; the above is the default. To change it, just tell the agent "save tracks to X" (stored in the `MUSIC_KIE_SUNO_OUT_DIR` environment variable; unset it to reset)
-- Filename: `suno-<model>-<length>-<YYMMDD>-<HHMMSS>-<seq>-<title>.mp3` (e.g. `suno-V5_5-6m00s-260910-164913-001-Quiet_Hours_A1.mp3`)
+- Output: `<project>/output_music_kie_suno/<YYMMDD>/` inside a project, otherwise `~/Documents/output_music_kie_suno/<YYMMDD>/`
+- The output folder is chosen on first use; the above is the default. To change it, just tell the agent "save tracks to X" (stored in the `OUTPUT_DIR_MUSIC_KIE_SUNO` environment variable; unset it to reset)
+- The default model is **V6_WILD** (more variation under the same style). Prefer `V6` or `V6_MINI`? Just tell the agent — it pins the plan to that version.
+- Filename: `suno-<model>-<YYMMDD>-<HHMMSS>-<seq>-<trackname>.mp3` (e.g. track 1 `suno-V6_WILD-260910-164913-001-Quiet_Hours_A1.mp3`; track 2 gets its own composed name, e.g. `suno-V6_WILD-260910-164913-002-Quiet_Hours_A2.mp3` — without one it falls back to a `_v2` suffix)
 - Each request produces 2 tracks; both are downloaded automatically
 - Usage statistics accumulate in `usage.jsonl`
 
 ## Cost reference
 
-~12 credits per request (measured 2026-09, reference value). In music-generation mode the cost is uniform per request across models (as of 2026-09-11 — official page takes precedence). Failed requests consume no credits (operational experience as of 2026-09-11). The balance and total estimate are always confirmed before generation starts.
+~12 credits per request (measured 2026-09, reference value; V6 family same price — operator-verified). Failed requests consume no credits (operational experience as of 2026-09-11). The balance and total estimate are always confirmed before generation starts.
 
 ## Commercial use (YouTube uploads etc.)
 

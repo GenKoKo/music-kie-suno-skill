@@ -26,7 +26,7 @@ node scripts/suno.js credit
 - If it prints the setup guide, relay it to the user verbatim and stop.
 - Otherwise relay the balance. This call doubles as a health check (5xx / network error = service temporarily unavailable).
 - The credit preflight also compares the installed version against the published repo's main branch and prints an `UPDATE AVAILABLE` line when the remote is newer — relay it and suggest `npx skills add GenKoKo/music-kie-suno`.
-- If `node` itself is missing (command not found), guide the Node.js install first and re-run the preflight: macOS → `brew install node` or the graphical installer from nodejs.org (prefer the installer for users without Homebrew); Windows → `winget install OpenJS.NodeJS.LTS` or the installer from nodejs.org.
+- If `node` itself is missing (command not found), guide the Node.js install first and re-run the preflight: macOS → `brew install node` when Homebrew exists; without Homebrew, give the user the one-line official .pkg install to run in their Terminal (curl the latest v24 .pkg from nodejs.org/dist/latest-v24.x/ + `sudo installer` — sudo prompts for their password, so it cannot run from your shell); Windows → `winget install OpenJS.NodeJS.LTS` or the installer from nodejs.org. If Node.js is present, skip all of this silently — never bring up installation when it is not needed. Website alternative to offer the user: the LTS installer at nodejs.org/en/download matched to their system — macOS `macOS Installer (.pkg)` (universal: Apple Silicon and Intel), Windows `Windows Installer (.msi)` (x64).
 - First-time user (no account, no key)? Walk them through the README onboarding: register → obtain API key → set the env var (they may paste the key to you — see Assisted API-key setup) → first track. Card binding & top-up are only needed when the balance is insufficient — new accounts may carry free testing credits per the official FAQ (actual granting varies). The registration link and its disclosure are in the README.
 - **Referral link (default Japanese)**: this skill targets Japanese users — give `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8` by default; use `https://kie.ai?ref=dd95e71edb49afb16467a8523cbf31d8` only when the user clearly communicates in another language. Always include the disclosure text from the README.
 
@@ -48,8 +48,8 @@ For non-engineer users the easy path is acceptable: the user pastes the API key 
 
 During onboarding (or anytime), ask once where downloaded tracks should go:
 
-- **Default (recommended)**: `<project>/music_kie_suno/<YYMMDD>/` inside a git project, otherwise `~/Documents/music_kie_suno/<YYMMDD>/` — nothing to do.
-- **Custom folder**: set the environment variable `MUSIC_KIE_SUNO_OUT_DIR` to an absolute path — the same agent-assisted flow as the API key (`export MUSIC_KIE_SUNO_OUT_DIR=/path/to/dir` in the shell rc, or `setx` on Windows; create the folder if missing). All runs then use `<that path>/<YYMMDD>/`; the custom folder takes precedence even inside a git project. Unsetting the variable restores the default.
+- **Default (recommended)**: `<project>/output_music_kie_suno/<YYMMDD>/` inside a git project, otherwise `~/Documents/output_music_kie_suno/<YYMMDD>/` — nothing to do.
+- **Custom folder**: set the environment variable `OUTPUT_DIR_MUSIC_KIE_SUNO` to an absolute path — the same agent-assisted flow as the API key (`export OUTPUT_DIR_MUSIC_KIE_SUNO=/path/to/dir` in the shell rc, or `setx` on Windows; create the folder if missing). All runs then use `<that path>/<YYMMDD>/`; the custom folder takes precedence even inside a git project. Unsetting the variable restores the default.
 
 Verify with the dry-run (`generate --plan <file>` without `--yes`) — the `output dir:` line shows the resolved path.
 
@@ -60,8 +60,9 @@ From the user, gather:
 1. Number of requests N (each request produces exactly 2 tracks)
 2. Style / mood / genre description
 3. Instrumental or with vocals
-4. Model (default `V5_5`)
-5. Duration in seconds (V5_5 only; default 360)
+4. Duration in seconds (10–360; default 360)
+
+**Track count vs request count — always convert and confirm.** Users speak in track counts, but generation and billing happen per request, and **1 request produces exactly 2 tracks** (two versions of the same plan entry). When the user names a track count, convert it to a request count with `ceil(tracks ÷ 2)` and explicitly confirm the mismatch before composing the plan (e.g. "3 tracks" → 2 requests → 4 tracks: relay that one extra track will be produced and ask if that is OK). If the user insists on an exact odd number, explain that 2 tracks per request is the platform's granularity and let them pick the request count. Never silently round a track count into a request count.
 
 ### Guiding vague style requests (instrumental)
 
@@ -88,33 +89,32 @@ Example derivation from one anchor (lo-fi jazz): swap instruments (`felt piano, 
 
 ## Step 2 — Variation policy
 
-- **Same-style batch**: ask the user to pick one of three verified weight combos — 1) conservative `weirdnessConstraint 0.2 / styleWeight 0.9`, 2) middle `0.5 / 0.6`, 3) experimental `0.8 / 0.4` (max variability). If the user has no preference, use the **experimental** combo. Audible differences verified 2026-09-10 on V5_5 instrumental.
+- **Same-style batch**: ask the user to pick one of three verified weight combos — 1) conservative `weirdnessConstraint 0.2 / styleWeight 0.9`, 2) middle `0.5 / 0.6`, 3) experimental `0.8 / 0.4` (max variability). If the user has no preference, use the **experimental** combo. Audible differences verified 2026-09-10 on instrumental.
 - **Style-text variation** (a different style per request): only when the user explicitly asks for style variety; compose each variant and show them in the plan.
 - The combo choice appears in the confirmation-gate summary so the user sees it before approving.
 
 ## Step 3 — Pure-instrumental presets
 
-- **V5_5**: `instrumental: true`, `duration: 360` (the duration parameter controls length precisely — verified).
-- **Below V5_5** (V4, V4_5, ...): `instrumental: false` + `lyrics` set to `"[Instrumental Break]"` repeated 150 times + `"[END]"` (legacy technique to maximize length; the duration parameter is ignored on these models).
+- **Default model V6_WILD** (maximizes variation under the same style; `V6` / `V6_MINI` on request): `instrumental: true`, `duration: 360` (the duration parameter controls length precisely — verified).
 
 ## Step 4 — Titles
 
 - Auto-assign SHORT English titles based on the requested style, unless the user specified titles (Japanese titles are fine when the user asks).
-- Titles must be unique within the batch, max 80 characters. Track 2 of each request gets a varied form of the request title.
+- Titles must be unique within the batch, max 80 characters. Compose a `title2` for every request — a distinct varied form of `title` for the second track (same uniqueness and length rules). When `title2` is omitted, the second file falls back to the plan title with a `_v2` suffix.
 
 ## Step 5 — Compose the plan file
 
-Write `<music_kie_suno root>/plans/plan-<YYMMDD>-<HHMMSS>.md`: a human-readable summary on top, then ONE ```json fence at the bottom containing the machine-readable array. The script parses only the json fence.
+Write `<output_music_kie_suno root>/plans/plan-<YYMMDD>-<HHMMSS>.md`: a human-readable summary on top, then ONE ```json fence at the bottom containing the machine-readable array. The script parses only the json fence.
 
 ```json
 [
-  {"title": "Quiet Hours A1", "style": "Calm lo-fi jazz, soft piano, brushed drums, slow tempo", "model": "V5_5", "instrumental": true, "duration": 360}
+  {"title": "Quiet Hours A1", "title2": "Quiet Hours A2", "style": "Calm lo-fi jazz, soft piano, brushed drums, slow tempo", "instrumental": true, "duration": 360}
 ]
 ```
 
-Fields: `title` (required), `style` (required), `model`, `instrumental`, `lyrics`, `duration` (V5_5 only), `styleWeight` / `weirdnessConstraint` / `audioWeight` (0–1), `negativeTags`, `vocalGender` (customMode only), `personaId` / `personaModel` (personas, V5+). See "Parameters & per-model availability" below.
+Fields: `title` (required), `title2` (optional second-track name), `style` (required), `instrumental`, `lyrics`, `duration` (10–360), `styleWeight` / `weirdnessConstraint` / `audioWeight` (0–1), `negativeTags`, `vocalGender`, `personaId` / `personaModel`. The plan carries no `model` field — the script always submits V6 (older versions are discontinued). See "Parameters" below.
 
-Output root: `<git project root>/music_kie_suno/` when running inside a project, otherwise `~/Documents/music_kie_suno/`.
+Output root: `<git project root>/output_music_kie_suno/` when running inside a project, otherwise `~/Documents/output_music_kie_suno/`.
 
 ## Step 6 — Confirmation gate (mandatory)
 
@@ -142,39 +142,59 @@ Relay the markdown table to the user each time (statuses: `queued` → `submitte
 
 ## Step 9 — Delivery
 
-Point the user to `report.md` in the run directory and list the downloaded `.mp3` paths. Summarize elapsed time and credits used. Past runs live under `music_kie_suno/<YYMMDD>/` (report.md + status.json); re-render any past run with `node scripts/suno.js status --dir <runDir>`.
+Point the user to `report.md` in the run directory and list the downloaded `.mp3` paths. Summarize elapsed time and credits used. Past runs live under `output_music_kie_suno/<YYMMDD>/` (report.md + status.json); re-render any past run with `node scripts/suno.js status --dir <runDir>`.
+
+**Platform retention (~14 days):** generated audio remains downloadable on KIE.AI for only about 14 days and is then deleted from the platform. The local files in the output folder are the permanent copy — relay this to the user so they keep or back up tracks they care about; if local files are lost, re-download from the platform within the window or regenerate. Defer to the official KIE.AI pages for the current retention policy.
 
 ## Parameter limits (validated by the script before submission)
 
-| model | lyrics (prompt) | style | title | duration param |
-|---|---|---|---|---|
-| V4 | 3000 chars | 200 chars | 80 chars | not supported |
-| V4_5 / V4_5PLUS / V4_5ALL | 5000 chars | 1000 chars | 80 chars | not supported |
-| V5 / V5_5 | 5000 chars | 1000 chars | 80 chars | V5_5 only |
+| lyrics (prompt) | style | title | duration |
+|---|---|---|---|
+| 5000 chars | 1000 chars | 80 chars | 10–360 s |
 
-Cost reference: ~12 credits per request (measured 2026-09; the script always shows the real balance delta). Cost is uniform per request across models in music-generation mode (operator-verified 2026-09-11).
+Cost reference: ~12 credits per request (measured 2026-09; the script always shows the real balance delta; V6 family same price — operator-verified).
+## Usage statistics (`usage.jsonl`)
+
+One JSON object per request is appended to `<output root>/usage.jsonl` after each batch (local only; gitignored). The schema is pinned — `v` increments only on a breaking field change:
+
+| field | type | meaning |
+|---|---|---|
+| `v` | number | schema version; `1` (lines written before 0.4.0 lack this field) |
+| `at` | ISO 8601 string | batch finish time |
+| `title` | string | plan entry title (both tracks of a request share it — tell them apart via `files[]`) |
+| `taskId` | string | KIE.AI task id |
+| `status` | string | `done` or `failed` |
+| `elapsedSec` | number | submission → completion seconds |
+| `tracks` | object[] | one object per downloaded track: `{file, title, url}` — `title` is the per-track title (`title2` when the plan provided one), `url` is the platform download URL (valid only within the ~14-day retention window) |
+
+Examples: total generation time across history — `jq -s 'map(.elapsedSec // 0) | add' usage.jsonl`; every produced file — `jq -r '.files[]' usage.jsonl`.
+
 
 Rate limit (official): each account allows at most 20 new generation requests per 10 seconds (≈ 100+ concurrent tasks). The script paces submissions through a sliding window at 18 requests / 10 s — leaving margin in case the user is also generating manually on the website. It also aborts before any submission when the balance is below the estimated total (~12/request), guaranteeing the whole batch is fundable before the first request is sent.
 
-## Parameters & per-model availability (official docs)
+## Parameters (official docs — jobs API, V6 family)
 
-| parameter | type | effect | availability |
-|---|---|---|---|
-| customMode | bool | custom lyrics/style control | all models |
-| instrumental | bool | pure instrumental, no vocals | all models |
-| prompt (lyrics) | string | lyrics in custom mode; required when instrumental=false | all models (see limits) |
-| style | string | genre / instruments / tempo / mood; required | all models |
-| title | string | track title; required | all models |
-| model | enum | V3_5 / V4 / V4_5 / V4_5PLUS / V4_5ALL / V5 / V5_5 | — |
-| duration | number | audio length in seconds (default 20, min 10) | customMode=true AND V5_5 only |
-| negativeTags | string | styles/traits to exclude (comma-separated) | all models |
-| vocalGender | string | `m` / `f` vocal preference | customMode=true only |
-| styleWeight | number 0–1 (2 dp) | adherence strength to the style text | all models |
-| weirdnessConstraint | number 0–1 (2 dp) | experimental / creative deviation | all models |
-| audioWeight | number 0–1 (2 dp) | balance of audio features vs other factors | all models |
-| personaId | string | Persona / Voice ID to apply | customMode=true only |
-| personaModel | enum | `style_persona` / `voice_persona` | model V5 and above only |
-| callBackUrl | string | async callback URL; required by API, this skill polls instead | all models |
+The script submits to `POST /api/v1/jobs/createTask` with the wrapper `{ model: "ai-music-api/generate", callBackUrl, input: { ... } }`; all fields below live inside `input` (snake_case). Polling: `GET /api/v1/jobs/recordInfo?taskId=`.
+
+| parameter | type | effect |
+|---|---|---|
+| custom_mode | bool | custom lyrics/style control |
+| instrumental | bool | pure instrumental, no vocals |
+| prompt (lyrics) | string | lyrics in custom mode; required when instrumental=false |
+| style | string | genre / instruments / tempo / mood; required |
+| title | string | track title; required |
+| title2 | string | skill-local: optional distinct composed name for the second track of the request (varied form of title; filename fallback: `_v2` suffix) |
+| model | enum | V6 / V6_MINI / V6_WILD — default V6_WILD (more variation under the same style); plan may pin another family member on request |
+| duration | number | audio length in seconds, 10–360 (default 20) |
+| negative_tags | string | styles/traits to exclude (comma-separated) |
+| vocal_gender | string | `m` / `f` vocal preference (custom_mode only; probabilistic) |
+| style_weight | number 0–1 (2 dp) | adherence strength to the style text |
+| weirdness_constraint | number 0–1 (2 dp) | experimental / creative deviation |
+| audio_weight | number 0–1 (2 dp) | balance of audio features vs other factors |
+| persona_id / persona_model | string / enum | persona reuse (`style_persona` / `voice_persona`; custom_mode only) |
+| callBackUrl | string | wrapper field (camelCase, outside `input`); required by API, this skill polls instead |
+
+Active versions: V6 / V6_MINI / V6_WILD. V3_5 / V4 / V4_5* / V5 / V5_5 are discontinued and no longer accepted by this skill.
 
 ## Style variation levers (same style text)
 
@@ -186,7 +206,7 @@ Different renders WITHOUT changing the style string — combination levers, stro
 4. `audioWeight`: shifts tonal emphasis; subtle.
 5. `vocalGender` / `personaId`: only for vocal tracks.
 
-**Verified combos (2026-09-10, V5_5 instrumental, identical style text — audible difference confirmed by operator listening test)**:
+**Verified combos (2026-09-10, instrumental, identical style text — audible difference confirmed by operator listening test)**:
 
 - conservative: `weirdnessConstraint 0.2 + styleWeight 0.9`
 - middle: `0.5 + 0.6`
@@ -197,8 +217,8 @@ Different renders WITHOUT changing the style string — combination levers, stro
 - **Opening first**: BGM listeners decide within the first 7–15 seconds. Put the core atmosphere at the front of the style text and use opening-instrument directives (variation technique #3) to shape the critical opening.
 - **Choosing between the 2 tracks of a request**: judge by the opening 30 seconds; re-generate via a new request only if both are unusable (each retry costs ~12 credits).
 - **Japanese lyrics (vocal tracks)**: convert kanji to katakana/hiragana in lyrics to avoid mispronunciation; watch particles (は read as わ, へ as え).
-- **Known issue**: V5_5 vocal mode may exhibit high-frequency noise audible to ~15% of listeners (reported 2026-03). The instrumental default avoids it; vocal users should check renders.
-- **Consistent vocals**: `personaId` / `personaModel` reuse a favored vocal or style across generations (persona requires customMode; personaModel V5+).
+- **Known issue**: vocal mode may exhibit high-frequency noise audible to ~15% of listeners (reported 2026-03 on V5_5). The instrumental default avoids it; vocal users should check renders.
+- **Consistent vocals**: `personaId` / `personaModel` reuse a favored vocal or style across generations (persona requires custom_mode).
 - **BPM**: include a target BPM in the style text as guidance — it nudges but does not guarantee tempo.
 
 ## User FAQ
