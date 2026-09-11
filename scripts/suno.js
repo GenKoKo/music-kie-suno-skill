@@ -10,7 +10,7 @@ const API = 'https://api.kie.ai';
 const KEY_ENV = 'KIE_AI_API_KEY';
 const CREDIT_REF_PER_REQUEST = 12;
 const POLL_INTERVAL_MS = 5000;
-const POLL_CAP_MS = 900000; // per-task poll timeout (V6 360s tracks observed 171-215s; 15 min leaves queue margin for slow queues)
+const POLL_CAP_MS = 600000; // per-task poll timeout (V6 360s tracks observed 171-215s; 10 min ~= 2.8x margin)
 const CREDIT_REFRESH_MS = 60000;
 const PROGRESS_EVERY_MS = 60000;
 const SUBMIT_RETRIES = 2;
@@ -244,7 +244,14 @@ function renderTable(st) {
 function extractSunoData(j) {
   const d = j && j.data;
   if (d && d.response && Array.isArray(d.response.sunoData)) return d.response.sunoData;
-  if (d && typeof d.resultJson === 'string') { try { const rj = JSON.parse(d.resultJson); if (Array.isArray(rj.data)) return rj.data; } catch (e) {} }
+  if (d && typeof d.resultJson === 'string') {
+    try {
+      const rj = JSON.parse(d.resultJson);
+      if (Array.isArray(rj.data)) return rj.data;
+      if (rj.resultObject && Array.isArray(rj.resultObject.lyricsData)) return rj.resultObject.lyricsData;
+      if (Array.isArray(rj.lyricsData)) return rj.lyricsData;
+    } catch (e) {}
+  }
   if (Array.isArray(d)) return d;
   if (d && Array.isArray(d.tracks)) return d.tracks;
   return null;

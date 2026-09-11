@@ -138,7 +138,7 @@ Note the run directory from the output. Balance errors show the Japanese billing
 node scripts/suno.js status
 ```
 
-Relay the markdown table to the user each time (statuses: `queued` → `submitted` → `PENDING` / `TEXT_SUCCESS` / `FIRST_SUCCESS` → `done` / `failed`, with downloaded files listed). Repeat until `ALL_REQUESTS_FINISHED`. Expectation to relay: the V6 family takes ~3–4 minutes per 360 s request (observed 171–215 s across V6_MINI / V6 / V6_WILD, 2026-09-12) — noticeably longer than the discontinued V5_5 (median 91 s); the poll timeout is 15 min per task, so a slow queue is not yet a failure.
+Relay the markdown table to the user each time (statuses: `queued` → `submitted` → `PENDING` / `TEXT_SUCCESS` / `FIRST_SUCCESS` → `done` / `failed`, with downloaded files listed). Repeat until `ALL_REQUESTS_FINISHED`. Expectation to relay: the V6 family takes ~3–4 minutes per 360 s request (observed 171–215 s across V6_MINI / V6 / V6_WILD, 2026-09-12) — noticeably longer than the discontinued V5_5 (median 91 s); the poll timeout is 10 min per task, so a slow queue is not yet a failure.
 
 ## Step 9 — Delivery
 
@@ -184,8 +184,8 @@ The script submits to `POST /api/v1/jobs/createTask` with the wrapper `{ model: 
 | style | string | genre / instruments / tempo / mood; required |
 | title | string | track title; required |
 | title2 | string | skill-local: optional distinct composed name for the second track of the request (varied form of title; filename fallback: `_v2` suffix) |
-| model | enum | V6 / V6_MINI / V6_WILD — default V6 (operator listening test preferred its sound); plan may pin another family member on request |
-| duration | number | audio length in seconds, 10–360 (default 20) |
+| model | enum | V6 / V6_MINI / V6_WILD — default V6 (listening test); V6_WILD not recommended (hissy artifacts observed); plan may pin another family member on request |
+| duration | number | audio length in seconds, 10–360 (default 20); honored on V6 and V6_WILD — V6_MINI may return shorter tracks (~half observed) |
 | negative_tags | string | styles/traits to exclude (comma-separated) |
 | vocal_gender | string | `m` / `f` vocal preference (custom_mode only; probabilistic) |
 | style_weight | number 0–1 (2 dp) | adherence strength to the style text |
@@ -198,13 +198,15 @@ Active versions: V6 / V6_MINI / V6_WILD. V3_5 / V4 / V4_5* / V5 / V5_5 are disco
 
 ### V6 family observed behavior (live run 2026-09-12, one 360 s instrumental request each)
 
-| | V6_WILD (default) | V6 | V6_MINI |
+| | V6 (default) | V6_WILD | V6_MINI |
 |---|---|---|---|
-| generation wall time | 215 s | 198 s | 171 s |
-| 2-track file size | 6.9 / 7.8 MB | 7.7 / 7.9 MB | 4.0 / 4.0 MB (lighter encode) |
-| track delivery | both in one poll cycle | both in one poll cycle | staggered across polls — track 0's `audio_url` can lag; handled by id-based dedup |
+| generation wall time | 198 s | 215 s | 171 s |
+| actual duration (requested 360 s) | 359.9 / 358.8 s | 359.8 / 360.3 s | 203.6 / 184.8 s — ignores the duration parameter |
+| sound (operator listen test) | preferred | hissy/grainy — not recommended | acceptable, lighter encode |
+| 2-track file size | 7.7 / 7.9 MB | 6.9 / 7.8 MB | 4.0 / 4.0 MB |
+| track delivery | both in one poll cycle | both in one poll cycle | staggered across polls — handled by id-based dedup |
 
-Same endpoint, payload shape, and billing (12 credits) for the whole family; only `input.model` differs. Relay to users: default is **V6** (operator listening test preferred its sound, 2026-09-12); MINI = fastest and lightest, WILD = most variation under the same style — both selectable on request. Poll cap is 15 min per task.
+Same endpoint, payload shape, and billing (12 credits) for the whole family; only `input.model` differs. Relay to users: default is **V6** (operator listening test preferred its sound, 2026-09-12); V6_WILD is **not recommended** — hissy/grainy artifacts in the same test; variation comes from `styleWeight` / `weirdnessConstraint` tuning instead. MINI = fastest and lightest but may ignore the requested duration. Poll cap is 10 min per task.
 
 ## Style variation levers (same style text)
 

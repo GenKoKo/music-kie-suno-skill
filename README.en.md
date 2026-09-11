@@ -175,7 +175,7 @@ node scripts/suno.js status
 
 - Output: `<project>/output_music_kie_suno/<YYMMDD>/` inside a project, otherwise `~/Documents/output_music_kie_suno/<YYMMDD>/`
 - The output folder is chosen on first use; the above is the default. To change it, just tell the agent "save tracks to X" (stored in the `OUTPUT_DIR_MUSIC_KIE_SUNO` environment variable; unset it to reset)
-- The default model is **V6** (chosen by listening test). Prefer more variation? `V6_WILD`. Lighter and faster? `V6_MINI`. Just tell the agent — it pins the plan to that version.
+- The default model is **V6** (chosen by listening test). More variation is tuned via style weights — just ask for something more experimental. `V6_WILD` is not recommended (grainy sound) and `V6_MINI` is faster/lighter but may ignore the requested length.
 - Filename: `suno-<model>-<YYMMDD>-<HHMMSS>-<seq>-<trackname>.mp3` (e.g. track 1 `suno-V6-260910-164913-001-Quiet_Hours_A1.mp3`; track 2 gets its own composed name, e.g. `suno-V6-260910-164913-002-Quiet_Hours_A2.mp3` — without one it falls back to a `_v2` suffix)
 - Each request produces 2 tracks; both are downloaded automatically
 - Usage statistics accumulate in `usage.jsonl`
