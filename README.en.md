@@ -11,6 +11,8 @@ Batch-generate AI music through the KIE.AI Suno API. Designed so that **non-engi
 
 Common questions (commercial use, billing, troubleshooting) are collected in [FAQ.md](FAQ.md) (Japanese).
 
+🎬 **Explainer slides**: [open in your browser](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 14 pages walking through the whole skill (details in the explainer-slides section below).
+
 ## Agent quick start (this section is for the AI agent)
 
 If you are an AI agent (Claude Code / Codex / pi, etc.) whose user just asked to "create songs with Suno", follow this section in order. The user is typically a non-engineer: run every terminal step yourself and only ask them for decisions (approval, billing).
@@ -22,6 +24,12 @@ If you are an AI agent (Claude Code / Codex / pi, etc.) whose user just asked to
 5. **Generate.** On a natural-language request (e.g. "create 2 BGM tracks with Suno"): check the balance → propose a generation plan → get the user's explicit approval (nothing is spent before approval) → run the batch → report progress and deliver the files. If the user speaks in track counts, convert to a request count before planning — **1 request = exactly 2 tracks** (two versions of the same plan entry), e.g. "3 tracks" → 2 requests = 4 tracks — and confirm the conversion with the user. The full operational contract lives in `SKILL.md` — read it before your first generation.
 
 Everything below is written for the human user (especially non-engineers). Read on if you want the details.
+
+## Explainer slides
+
+![Explainer slides cover](docs/slides/p01.png)
+
+🎬 **All 14 pages**: [open on GitHub Pages](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — the generation flow, V6 family comparison, and safety design, explained page by page.
 
 ## Install
 
