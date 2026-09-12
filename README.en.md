@@ -204,6 +204,17 @@ Official sources:
 
 If you need a definitive commercial assurance for high-stakes use, confirm with KIE.AI support before publishing.
 
+## Security
+
+This skill is built with the following safety principles:
+
+- **Fully open code (MIT License)** — everything is public and auditable. The script runs on Node.js standard features only, with almost no third-party dependencies
+- **Your API key lives in an environment variable only** — it is never embedded in code, and never written into plans, reports, or status files. Even the agent-assisted setup never echoes the key back to you
+- **Bundled self-audit script** — `scripts/self-audit.sh` automatically checks for hardcoded keys, connections to non-allowlisted URLs, and unsafe patterns
+- **No spend before approval** — generation never starts without a balance + estimate check, and failed requests are not charged
+
+For the rights of generated music, see the commercial-use section above and [FAQ.md](FAQ.md).
+
 ## Author / feedback
 
 **Ko @ AIxBGM自動販売機**
