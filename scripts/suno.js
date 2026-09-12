@@ -104,11 +104,21 @@ function newerVersion(a, b) { const pa = (a || '').split('.').map(Number), pb = 
 async function updateNotice() {
   const local = localVersion();
   if (!local) return null;
-  const md = await getText('https://raw.githubusercontent.com/' + SKILL_REPO + '/main/SKILL.md');
+  const base = 'https://raw.githubusercontent.com/' + SKILL_REPO + '/main/';
+  const md = await getText(base + 'SKILL.md');
   if (md == null) return null; // network/repo unavailable — stay silent
   const remote = skillVersionFrom(md);
-  if (remote && newerVersion(remote, local)) return 'UPDATE AVAILABLE: ' + local + ' -> ' + remote + ' — run: npx skills add ' + SKILL_REPO;
-  return null;
+  if (!(remote && newerVersion(remote, local))) return null;
+  let whatsNew = '';
+  const idx = await getText(base + 'CHANGELOG.md');
+  if (idx) {
+    for (const row of String(idx).split('\n')) {
+      if (!/^\|\s*0\./.test(row)) continue;
+      const c = row.split('|').map(s => s.trim());
+      if (c[1] && newerVersion(c[1], local)) whatsNew += '- ' + c[1] + (c[2] ? ' (' + c[2] + ')' : '') + ': ' + (c[3] || '') + '\n';
+    }
+  }
+  return 'UPDATE AVAILABLE: ' + local + ' -> ' + remote + ' — run: npx skills add ' + SKILL_REPO + (whatsNew ? '\nWhat is new:\n' + whatsNew + 'Relay the notes above, explain what changed, and ask the user whether to update. Update only on explicit approval.' : '');
 }
 
 async function credit(key) {

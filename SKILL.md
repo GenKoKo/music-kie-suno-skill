@@ -25,7 +25,7 @@ node scripts/suno.js credit
 
 - If it prints the setup guide, relay it to the user verbatim and stop.
 - Otherwise relay the balance. This call doubles as a health check (5xx / network error = service temporarily unavailable).
-- The credit preflight also compares the installed version against the published repo's main branch and prints an `UPDATE AVAILABLE` line when the remote is newer — relay it and suggest `npx skills add GenKoKo/music-kie-suno-skill`.
+- The credit preflight also compares the installed version against the published repo's main branch. When a newer version exists it prints `UPDATE AVAILABLE` plus a "What is new" list fetched from the repo changelog (entries between the installed and latest versions) — relay the list, explain what changed, then ASK the user whether to update. Update only on explicit user approval (`npx skills add GenKoKo/music-kie-suno-skill`).
 - If `node` itself is missing (command not found), guide the Node.js install first and re-run the preflight. Typical raw errors that mean "Node is absent" — treat them as your trigger for the install guidance: `zsh:1: command not found: npx` / `bash: npx: command not found` (macOS), `'npx' is not recognized as an internal or external command` (Windows cmd), `npx : The term 'npx' is not recognized` (Windows PowerShell). The OS gives the user no install hints — the guidance is entirely your job. macOS → `brew install node` when Homebrew exists; without Homebrew, give the user the one-line official .pkg install to run in their Terminal (curl the latest v24 .pkg from nodejs.org/dist/latest-v24.x/ + `sudo installer` — sudo prompts for their password, so it cannot run from your shell); Windows → `winget install OpenJS.NodeJS.LTS` or the installer from nodejs.org. If Node.js is present, skip all of this silently — never bring up installation when it is not needed. Website alternative to offer the user: the LTS installer at nodejs.org/en/download matched to their system — macOS `macOS Installer (.pkg)` (universal: Apple Silicon and Intel), Windows `Windows Installer (.msi)` (x64).
 - First-time user (no account, no key)? Walk them through the README onboarding: register → obtain API key → set the env var (they may paste the key to you — see Assisted API-key setup) → first track. Card binding & top-up are only needed when the balance is insufficient — new accounts may carry free testing credits per the official FAQ (actual granting varies). The registration link and its disclosure are in the README.
 - **Referral link (default Japanese)**: this skill targets Japanese users — give `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8` by default; use `https://kie.ai?ref=dd95e71edb49afb16467a8523cbf31d8` only when the user clearly communicates in another language. Always include the disclosure text from the README.
@@ -86,6 +86,30 @@ Keep `<genre>` fixed and rotate exactly ONE component per request — large audi
 5. **Key / era wording**: `major key, warm` vs `minor key, melancholic`; `1960s trio recording` vs `modern bedroom production`.
 
 Example derivation from one anchor (lo-fi jazz): swap instruments (`felt piano, flugelhorn`) / swap texture + era (`tape saturation, close-mic dry, late-night hotel lobby`) / opening directive (`opens with brushed drums groove, airy room reverb`).
+
+## Music design & planning quick reference (supplementary knowledge)
+
+Platform operation is this skill's core; the notes below are supplementary music design & planning knowledge (mood, keys, tempo, arrangement). Final quality depends on the Suno generation engine — never promise masterpieces.
+
+**Mood ↔ key / mode** (put into the style text, e.g. "in A minor"):
+- Major: bright, reassuring / Minor: melancholic, night-time / Dorian: modal, jazzy / Lydian: floating, dreamy / Pentatonic: safe and easy-listening
+
+**Genre quick reference** (tempo / core instruments / texture):
+- Lo-fi hip hop: 65–80 BPM / felt piano + brushed drums + vinyl noise / 7th chords, dusty warmth
+- Ambient: 60–70 / pads + long reverb / little or no rhythm
+- Acoustic folk: 90–110 / acoustic guitar + cajon / room-mic intimacy
+- Jazz trio: 120–140 (swing) / piano + upright bass + brushed drums / live-club air
+- City pop: 100–115 / bass-forward + clean guitar + brass / glossy 80s sheen
+- Cinematic: 70–90 / strings + low drums / wide reverb, gradual build
+
+**BGM design principles** (study / work / sleep):
+- No vocals, flat dynamics, no sudden drops — steady and loop-friendly
+- Keep mid-frequencies centred so speech stays intelligible over the track
+- Opening-first: the mood must land in the first 10 seconds
+
+**Judging the 2 delivered tracks**:
+- First 30 seconds decide; check for noise, muddy low-end, abrupt transitions
+- If both are unusable, re-generate as a new request (costs ~12 credits)
 
 ## Step 2 — Variation policy
 
