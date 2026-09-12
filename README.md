@@ -74,6 +74,8 @@ cd /tmp && curl -fsSL https://nodejs.org/dist/latest-v24.x/ | grep -o 'node-v[0-
 winget install OpenJS.NodeJS.LTS
 ```
 
+> 🔐 **パスワード入力が必要なのは、この Node.js のインストール時だけ**です（macOS のインストーラ実行、Windows の UAC 確認）。APIキーの設定や音楽生成にパスワードは不要です。
+
 APIキーの設定方法は「エージェントにおまかせ」と「手動設定」の2つあります。特徴を比べて、自分に合う方を選んでください：
 
 | 方法                   | 手間                               | 向いている人                               | 注意点                                                                       |

@@ -74,6 +74,8 @@ cd /tmp && curl -fsSL https://nodejs.org/dist/latest-v24.x/ | grep -o 'node-v[0-
 winget install OpenJS.NodeJS.LTS
 ```
 
+> 🔐 **The only password moment is installing Node.js itself** (macOS installer run / Windows UAC prompt). Setting the API key and generating music need no password.
+
 There are two ways to set the API key — compare them and pick the one that suits you:
 
 | Method              | Effort                          | Best for                                            | Note                                                                     |
