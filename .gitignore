@@ -15,5 +15,4 @@ CLAUDE.md
 .idea/
 *.swp
 
-# blog draft (author-side, not shipped to skill users)
-docs/blog/
+# published post is tracked (docs/post/) — author-side drafts only go here if untracked
