@@ -14,3 +14,6 @@ CLAUDE.md
 .vscode/
 .idea/
 *.swp
+
+# blog draft (author-side, not shipped to skill users)
+docs/blog/
