@@ -7,6 +7,9 @@ CLAUDE.md
 .claude/
 .codex/
 .omc/
+
+# explainer slide source backup (kept locally for future edits; not shipped to skill users)
+/slide/
 .pi/
 .vscode/
 .idea/
