@@ -1,21 +1,21 @@
 # music-kie-suno-skill
 
-![Version](https://img.shields.io/badge/version-0.5.1-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
-![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0.5.2-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20ChatGPT%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **言語 / Language**: [日本語](README.md)｜English (this page)
 
 > **Supported models: the V6 family only** (default V6; V6_MINI / V6_WILD selectable). Older versions (V3_5–V5_5) are discontinued upstream and not supported.
 
-Batch-generate AI music through the KIE.AI Suno API. Designed so that **non-engineers can reach their first track** just by following this README — the actual generation is performed by your AI agent (Claude Code / Codex / pi, etc.).
+Batch-generate AI music through the KIE.AI Suno API. Designed so that **non-engineers can reach their first track** just by following this README — the actual generation is performed by your AI agent (Claude Code / ChatGPT / pi, etc.).
 
 Common questions (commercial use, billing, troubleshooting) are collected in [FAQ.md](FAQ.md) (Japanese).
 
-🎬 **Explainer slides**: [open in your browser](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 14 pages walking through the whole skill (details in the explainer-slides section below).
+🎬 **Explainer slides**: [open in your browser](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 16 pages walking through the whole skill (details in the explainer-slides section below).
 
 ## Agent quick start (this section is for the AI agent)
 
-If you are an AI agent (Claude Code / Codex / pi, etc.) whose user just asked to "create songs with Suno", follow this section in order. The user is typically a non-engineer: run every terminal step yourself and only ask them for decisions (approval, billing).
+If you are an AI agent (Claude Code / ChatGPT / pi, etc.) whose user just asked to "create songs with Suno", follow this section in order. The user is typically a non-engineer: run every terminal step yourself and only ask them for decisions (approval, billing).
 
 1. **Detect the runtime environment.** Check for Node.js with `node --version`. **If Node.js is present, skip this step silently** — do not bring up installation. `npx` ships with Node.js, so without Node neither the install nor the skill can run. If missing, detect the user's OS and install it: macOS → `brew install node` if Homebrew exists; otherwise have the user run the one-line official .pkg command from Step 3 in their own Terminal (`sudo` needs their password, so your shell cannot run it); Windows (PowerShell) → `winget install OpenJS.NodeJS.LTS`. If the user prefers downloading from the website, point them to the official LTS installer at nodejs.org/en/download matching their OS and CPU (macOS: universal .pkg for Apple Silicon and Intel; Windows: x64 .msi). Then re-check.
 2. **Install the skill.** Run `npx skills add GenKoKo/music-kie-suno-skill` yourself (do not ask the user to). It installs into `./.agents/skills/music-kie-suno/` relative to your current directory (skills.sh default).
@@ -29,7 +29,7 @@ Everything below is written for the human user (especially non-engineers). Read 
 
 ![Explainer slides cover](docs/slides/p01.png)
 
-🎬 **All 14 pages**: [open on GitHub Pages](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — the generation flow, V6 family comparison, and safety design, explained page by page.
+🎬 **All 16 pages**: [open on GitHub Pages](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — the generation flow, V6 family comparison, and safety design, explained page by page.
 
 ## Install
 
@@ -41,7 +41,7 @@ GitHub: **https://github.com/GenKoKo/music-kie-suno-skill**
 
 After installing, run the commands (credit / generate / status) from that install folder (`.agents/skills/music-kie-suno/`). From anywhere else, point at the script explicitly (`node <install-dir>/scripts/suno.js …`).
 
-Works with skill-aware agents (Claude Code / Codex / pi). If a newer version is published, the first balance check reports it automatically. No post-install setup — on first invocation the agent starts with a balance check, and if you have no account or key yet, it walks you through the Onboarding below first.
+Works with skill-aware agents (Claude Code / ChatGPT / pi). If a newer version is published, the first balance check reports it automatically. No post-install setup — on first invocation the agent starts with a balance check, and if you have no account or key yet, it walks you through the Onboarding below first.
 
 ## Getting started (Onboarding)
 
@@ -170,7 +170,7 @@ Ask naturally, e.g. "generate 3 study BGM tracks with Suno" or "5 tracks, more e
 
 > Requested lengths are honored on V6 (the default); V6_MINI may ignore them.
 
-As long as the scene, mood, and track count come across, you are set. Vague is fine — the agent narrows it down with three questions (scene / mood / instruments & tempo), then proposes a plan and waits for your approval. Count, length, and estimated credits are always confirmed before anything runs.
+As long as the scene, mood, and track count come across, you are set. Vague is fine — the agent narrows it down with three questions (scene / mood / instruments & tempo). When you are unsure, it offers 3–5 labeled options (a/b/c/... lowercase, though case does not matter) so a one-letter answer is enough — "same style as last time" is one of them, then proposes a plan and waits for your approval. Count, length, and estimated credits are always confirmed before anything runs.
 
 ## Direct commands
 
@@ -199,7 +199,7 @@ node scripts/suno.js status
 - The default model is **V6** (chosen by listening test). More variation is tuned via style weights — just ask for something more experimental. `V6_WILD` is not recommended (grainy sound) and `V6_MINI` is faster/lighter but may ignore the requested length.
 - Filename: `suno-<model>-<YYMMDD>-<HHMMSS>-<seq>-<trackname>.mp3` (e.g. track 1 `suno-V6-260910-164913-001-Quiet_Hours_A1.mp3`; track 2 gets its own composed name, e.g. `suno-V6-260910-164913-002-Quiet_Hours_A2.mp3` — without one it falls back to a `_v2` suffix)
 - Each request produces 2 tracks; both are downloaded automatically
-- Usage statistics accumulate in `usage.jsonl`
+- Usage statistics accumulate in `log.jsonl`
 
 ## Cost reference
 

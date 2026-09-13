@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 fail=0
 
 # 1. All URLs must be https and on allowlisted hosts
-bad_urls=$(grep -rhoE 'https?://[A-Za-z0-9./_-]+' scripts/ SKILL.md README.md README.en.md FAQ.md 2>/dev/null | sort -u | grep -vE '^https://(api\.kie\.ai|kie\.ai|docs\.kie\.ai|nodejs\.org|github\.com|tempfile\.aiquickdraw\.com|audiostream\.kie\.ai|musicfile\.kie\.ai|example\.com|suno\.com|raw\.githubusercontent\.com)' || true)
+bad_urls=$(grep -rhoE 'https?://[A-Za-z0-9./_-]+' scripts/ SKILL.md README.md README.en.md FAQ.md 2>/dev/null | sort -u | grep -vE '^https://(api\.kie\.ai|kie\.ai|docs\.kie\.ai|nodejs\.org|github\.com|genkoko\.github\.io|tempfile\.aiquickdraw\.com|audiostream\.kie\.ai|musicfile\.kie\.ai|example\.com|suno\.com|raw\.githubusercontent\.com)' || true)
 if [ -n "$bad_urls" ]; then echo 'FAIL: non-allowlisted URLs:'; echo "$bad_urls"; fail=1; fi
 
 # 2. No hardcoded key-like values

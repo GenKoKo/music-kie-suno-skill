@@ -1,27 +1,27 @@
 # music-kie-suno-skill
 
-![Version](https://img.shields.io/badge/version-0.5.1-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
-![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0.5.2-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20ChatGPT%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **言語 / Language**: 日本語（このページ）｜[English](README.en.md)
 
 > **対応モデル：V6 ファミリーのみ**（既定は V6。V6_MINI／V6_WILD も選択可）。旧バージョン（V3_5〜V5_5）は KIE.AI で提供終了のため非対応です。
 
-KIE.AI の Suno API を使って、AI 楽曲をバッチ生成するエージェントスキルです。**エンジニアでない方でも、この手順に沿って最初の1曲まで進められる**ように設計されています。生成そのものは AI エージェント（Claude Code / Codex / pi など）が行うので、人の作業はアカウント作成と初期設定だけです。
+KIE.AI の Suno API を使って、AI 楽曲をバッチ生成するエージェントスキルです。**エンジニアでない方でも、この手順に沿って最初の1曲まで進められる**ように設計されています。生成そのものは AI エージェント（Claude Code / ChatGPT / pi など）が行うので、人の作業はアカウント作成と初期設定だけです。
 
 よくある質問（商用利用・課金・トラブルなど）は **[FAQ.md](FAQ.md)** にまとめています。
 
-🎬 **説明スライド**: [ブラウザーで開く](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 全14ページでスキルの全体像を解説（詳細は下部の「説明スライド」セクション）。
+🎬 **説明スライド**: [ブラウザーで開く](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 全16ページでスキルの全体像を解説（詳細は下部の「説明スライド」セクション）。
 
 ## エージェント向けクイックスタート（AI エージェントが読む節）
 
-あなたが AI エージェント（Claude Code / Codex / pi など）で、「Suno で曲を作って」という依頼を受けたなら、この節に沿って実行してください。ユーザーは多くの場合エンジニアではないため、ターミナル操作はすべてエージェント側で行い、ユーザーには意思決定（承認・課金）だけを頼みます。
+あなたが AI エージェント（Claude Code / ChatGPT / pi など）で、「Suno で曲を作って」という依頼を受けたなら、この節に沿って実行してください。ユーザーは多くの場合エンジニアではないため、ターミナル操作はすべてエージェント側で行い、ユーザーには意思決定（承認・課金）だけを頼みます。
 
 1. **実行環境の検出**：`node --version` で Node.js の有無を確認します。**Node.js がある場合、このステップは黙ってスキップします**（インストールの話は切り出さない）。`npx` は Node.js に同梱されているため、Node がなければインストールもスキルの実行もできません。未インストールの場合は、ユーザーの OS を判定してインストールします：macOS → Homebrew があれば `brew install node`、なければ下の Step 3 の一行コマンド（公式 .pkg）をユーザーのターミナルで実行してもらいます（`sudo` のパスワード入力が必要なため、エージェント自身のシェルからは実行できません）；Windows（PowerShell）→ `winget install OpenJS.NodeJS.LTS`。サイトからの入手を希望する場合は、ユーザーの OS・CPU に合う公式インストーラ（macOS：.pkg ユニバーサル版／Windows：x64 の .msi。https://nodejs.org/en/download ）を案内します。インストール後、再確認します。
 2. **スキルのインストール**：`npx skills add GenKoKo/music-kie-suno-skill` をエージェント自身が実行します（ユーザーに実行させない）。インストール先はカレントディレクトリの `.agents/skills/music-kie-suno/`（skills.sh の既定動作）
 3. **プレフライト**：`.agents/skills/music-kie-suno/` で `node scripts/suno.js credit` を実行します。残高表示・サービス死活確認・更新通知（`UPDATE AVAILABLE` 表示時は What is new の変更メモも一緒に表示 — エージェントが内容を説明し、ユーザーが判断してから `npx skills add GenKoKo/music-kie-suno-skill` で更新）を兼ねます。出力はユーザーにそのまま伝えます。セットアップガイドが表示された場合は、それをそのまま伝えて案内に従います。
 4. **初回ユーザーのオンボーディング**：アカウント・API キーが未設定なら、下の Onboarding Step 1–2 を案内します（登録リンクは既定で日本語ロケール `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8` を使います）。キーの設定は OS とシェルを判定してエージェントが代行します：macOS / Linux → `~/.zshrc` などへの恒久 `export`；Windows → `setx`（恒久）または `$env:`（現在のセッションのみ）。ユーザーがキーをチャットに貼った場合は、返信にキーを表示せず、チャットを経由した旨を一度だけ伝えます（あとで https://kie.ai/ja/api-key でキーを再作成すれば無効化できます）。
-5. **生成**：自然言語の依頼（例：「Suno で BGM を 2 曲」）を受けたら、残高確認 → 生成プランの提示 → ユーザーの明示的な承認（承認前にクレジットは一切消費しない）→ バッチ生成 → 進捗報告とファイル納品、の順で進めます。ユーザーが曲数で指定した場合は、**1 リクエスト＝2 曲**（同一プランの 2 バージョン）であるため、リクエスト数に換算して（例：「3 曲」→ 2 リクエスト＝4 曲）プラン作成前に必ず確認します。完全な操作契約は `SKILL.md` にあるため、初回生成前に必ず読んでください。
+5. **生成**：自然言語の依頼（例：「Suno で BGM を 2 曲」）を受けたら、残高確認 → 生成プランの提示 → ユーザーの明示的な承認（承認前にクレジットは一切消費しない）→ バッチ生成 → 進捗報告とファイルの保存、の順で進めます。ユーザーが曲数で指定した場合は、**1 リクエスト＝2 曲**（同一プランの 2 バージョン）であるため、リクエスト数に換算して（例：「3 曲」→ 2 リクエスト＝4 曲）プラン作成前に必ず確認します。完全な操作契約は `SKILL.md` にあるため、初回生成前に必ず読んでください。
 
 # 以下は人間（特にエンジニアでないユーザー）向けの説明です。興味があれば読んでください。
 
@@ -29,7 +29,7 @@ KIE.AI の Suno API を使って、AI 楽曲をバッチ生成するエージェ
 
 ![説明スライド 表紙](docs/slides/p01.png)
 
-🎬 **全14ページ**: [GitHub Pages で開く](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 生成の流れ・V6比較・安全設計まで順に解説します。
+🎬 **全16ページ**: [GitHub Pages で開く](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 生成の流れ・V6比較・安全設計まで順に解説します。
 
 ## インストール
 
@@ -41,7 +41,7 @@ GitHub: **https://github.com/GenKoKo/music-kie-suno-skill**
 
 インストール後の各コマンド（credit / generate / status）は、このインストール先フォルダ（`.agents/skills/music-kie-suno/`）に移動して実行してください。別のフォルダから実行する場合は、スクリプトのフルパス指定（`node <インストール先>/scripts/suno.js …`）が必要です。
 
-Claude Code / Codex / pi など skills に対応したエージェントで動作します。新しいバージョンが公開されている場合は、最初の残高確認時に自動的に通知されます。インストール後の設定は不要です。最初の呼び出し時にエージェントが残高確認から始め、アカウント未登録・キー未設定の場合はこの README の Onboarding を先に案内します。
+Claude / ChatGPT / pi など skills に対応したエージェントで動作します。新しいバージョンが公開されている場合は、最初の残高確認時に自動的に通知されます。インストール後の設定は不要です。最初の呼び出し時にエージェントが残高確認から始め、アカウント未登録・キー未設定の場合はこの README の Onboarding を先に案内します。
 
 ## はじめての方へ（Onboarding）
 
@@ -122,6 +122,8 @@ $env:KIE_AI_API_KEY = "さっきコピーしたキー"
 
 エージェントが残高確認 → 生成プランの提示 → あなたの承認 → 生成 → ダウンロードまで全部案内します。承認前には一切クレジットを消費しません。
 
+**比較におすすめ（2モード）**：Instrumental に加えて、ボーカル入りも1リクエスト生成してみてください（例：「同じ雰囲気で、日本語の歌詞をつけた曲も1曲」）。2リクエスト＝4曲・約24クレジットで、歌詞あり／なしの違いと AI ボーカルの質感を一度で確認できます。歌詞はエージェントが提案します（聴きたい人と場面から主題を組み立てます）。
+
 **まず無料で試せる場合があります**：新規ユーザーへのテスト用80無料クレジット（約6リクエスト＝12曲分）は公式FAQによる**主張**であり、実際の付与状況が優先します（2026-09-11時点・付与条件は変更される場合があります）。付与されていれば、この時点で課金なしに試せます。付与されていない場合は、先に Step 5 でチャージしてください。
 
 初回の流れと目安：
@@ -162,6 +164,7 @@ $env:KIE_AI_API_KEY = "さっきコピーしたキー"
 | 目的             | フレーズ                                                |
 | ---------------- | ------------------------------------------------------- |
 | 最初の1曲        | Sunoで6分の作業用BGMを1曲作って                         |
+| 比較生成（推薦）  | 同じスタイルで、ボーカル入りとなしを1曲ずつ生成して比べる            |
 | 雰囲気を指定     | 落ち着いた夜のピアノジャズのBGMを3曲                    |
 | 好きな楽器で     | アコースティックギターのフォーク調で5曲、ボーカルなしで |
 | 日本語ボーカル曲 | 日本語の歌詞で、旅の始まりの歌を1曲作って               |
@@ -170,7 +173,7 @@ $env:KIE_AI_API_KEY = "さっきコピーしたキー"
 
 > ※ 曲の長さの指定は V6（既定）で反映されます。V6_MINI は長さを無視することがあります。
 
-「作りたいシーン」「雰囲気」「曲数」が伝わればOKです。曖昧な依頼でも大丈夫 — エージェントが3つの質問（シーン／気分／楽器とテンポ）で絞り込み、生成プランを提示して承認を待ちます。曲数・長さ・見積もりクレジットは必ず承認前に確認されます。
+「作りたいシーン」「雰囲気」「曲数」が伝わればOKです。曖昧な依頼でも大丈夫 — エージェントが3つの質問（シーン／気分／楽器とテンポ）で絞り込みます。迷った場面ではa〜eの選択肢を提示してくれるので、一文字でも答えられます（大文字でもOK）。「前回と同じスタイルで」も選べます。生成プランを提示して承認を待ちます。曲数・長さ・見積もりクレジットは必ず承認前に確認されます。
 
 ## 直接実行（コマンド）
 
@@ -199,7 +202,7 @@ node scripts/suno.js status
 - 既定のモデルは **V6**（聴き比べによる選定）。バリエーションはスタイル重みで調整します（「もっと実験的に」と伝えればOK）。`V6_WILD` はザラつき音が目立ち非推奨、`V6_MINI` は軽量ですが指定長を無視することがあります。
 - ファイル名：`suno-<model>-<YYMMDD>-<HHMMSS>-<連番>-<曲名>.mp3`（例：1曲目 `suno-V6-260910-164913-001-Quiet_Hours_A1.mp3`。2曲目はエージェントが付けた別題名で保存されます（例：`...-002-Quiet_Hours_A2.mp3`）。別題名がない場合は `_v2` 接尾辞が付きます）
 - 1リクエストにつき2曲生成され、両方ダウンロードされます
-- 統計は `usage.jsonl` に蓄積されます
+- 統計は `log.jsonl` に蓄積されます
 
 ## 料金の目安
 
@@ -209,7 +212,7 @@ node scripts/suno.js status
 
 公式ソース：
 
-- KIE.AI 利用規約: https://kie.ai/ja/terms-of-use — 一般条項のみで、生成楽曲の権利に関する明文規定はありません（2026-09-11 時点）。
+- KIE.AI 利用規約: https://kie.ai/ja/terms-of-use — 全13条を確認（2026-09-13 再確認・発効 2025-08-01）。生成物（音楽・画像・動画）の権利や商用可否の明文規定は**一切なし**。規約が扱うのは投稿コンテンツ（User Content）のライセンス条項のみ。確実な回答が必要な場合は KIE.AI サポート（https://kie.ai/vip-support）へ直接確認してください。
 - 生成エンジン Suno のライセンス規定: https://suno.com/help/licensing — 有償プランでは商用利用が明記されています（無料プランは非商用のみ）。
 
 重要な用途で確実な保証が必要な場合は、公開前に KIE.AI サポートへご確認ください。

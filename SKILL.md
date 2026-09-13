@@ -1,8 +1,8 @@
 ---
 name: music-kie-suno
-description: Batch-generate AI music via the KIE.AI Suno API with credit-aware preflight, user-confirmed generation plans, live per-track progress tables, and auto-download with timestamped filenames. Use when the user wants to create songs, BGM, or instrumental tracks with Suno or KIE (e.g., "Sunoで曲を作って", "BGM生成して", "generate music with Suno", "作業用BGMを作って").
+description: Batch-generate AI music via the KIE.AI Suno API with credit-aware preflight, user-confirmed generation plans, live per-track progress tables, and auto-download with timestamped filenames. Use when the user wants to create songs, BGM, background music, jingles, or theme songs with Suno or KIE (e.g., "Sunoで曲を作って", "作業用BGMを作って", "勉強用BGMを10曲", "睡眠用BGMがほしい", "カフェ用BGM", "BGM生成して", "テーマソングを作って", "generate background music", "create a jingle with Suno", "背景音樂"). Triggers: music generation requests for study / sleep / cafe / work / video-channel use, batch BGM production, or any request mentioning Suno / KIE.AI music creation.
 metadata:
-  version: 0.5.1
+  version: 0.5.2
 ---
 
 # Suno (KIE.AI) batch music generation
@@ -25,7 +25,7 @@ node scripts/suno.js credit
 
 - If it prints the setup guide, relay it to the user verbatim and stop.
 - Otherwise relay the balance. This call doubles as a health check (5xx / network error = service temporarily unavailable).
-- The credit preflight also compares the installed version against the published repo's main branch. When a newer version exists it prints `UPDATE AVAILABLE` plus a "What is new" list fetched from the repo changelog (entries between the installed and latest versions) — relay the list, explain what changed, then ASK the user whether to update. Update only on explicit user approval (`npx skills add GenKoKo/music-kie-suno-skill`).
+- The credit preflight also compares the installed version against the published repo's main branch. When a newer version exists it prints `UPDATE AVAILABLE` plus a "What is new" list fetched from the repo changelog (entries between the installed and latest versions) — relay the list in Japanese by default (translate the English summaries; keep version numbers; match the user's language if clearly non-Japanese), explain what changed, then ASK the user whether to update. Update only on explicit user approval (`npx skills add GenKoKo/music-kie-suno-skill`).
 - If `node` itself is missing (command not found), guide the Node.js install first and re-run the preflight. Typical raw errors that mean "Node is absent" — treat them as your trigger for the install guidance: `zsh:1: command not found: npx` / `bash: npx: command not found` (macOS), `'npx' is not recognized as an internal or external command` (Windows cmd), `npx : The term 'npx' is not recognized` (Windows PowerShell). The OS gives the user no install hints — the guidance is entirely your job. macOS → `brew install node` when Homebrew exists; without Homebrew, give the user the one-line official .pkg install to run in their Terminal (curl the latest v24 .pkg from nodejs.org/dist/latest-v24.x/ + `sudo installer` — sudo prompts for their password, so it cannot run from your shell); Windows → `winget install OpenJS.NodeJS.LTS` or the installer from nodejs.org. If Node.js is present, skip all of this silently — never bring up installation when it is not needed. Website alternative to offer the user: the LTS installer at nodejs.org/en/download matched to their system — macOS `macOS Installer (.pkg)` (universal: Apple Silicon and Intel), Windows `Windows Installer (.msi)` (x64).
 - First-time user (no account, no key)? Walk them through the README onboarding: register → obtain API key → set the env var (they may paste the key to you — see Assisted API-key setup) → first track. Card binding & top-up are only needed when the balance is insufficient — new accounts may carry free testing credits per the official FAQ (actual granting varies). The registration link and its disclosure are in the README.
 - **Referral link (default Japanese)**: this skill targets Japanese users — give `https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8` by default; use `https://kie.ai?ref=dd95e71edb49afb16467a8523cbf31d8` only when the user clearly communicates in another language. Always include the disclosure text from the README.
@@ -44,6 +44,11 @@ For non-engineer users the easy path is acceptable: the user pastes the API key 
 4. Report the balance → onboarding done. The key may exist ONLY in the shell rc / user environment — never in plan files, `status.json`, reports, or repo files.
 5. **Manual-path support**: when the user prefers manual setup or asks for the command, detect the OS and shell (process platform, `$SHELL`, `OSTYPE`) and present ONLY the matching one-line command — zsh/bash `export` with the correct rc file, Windows persistent `setx`, or current-session `$env:` — plus how to open the terminal (macOS: Terminal.app; Windows: PowerShell). The agent runs on the user's machine, so its platform matches the user's.
 
+## First-run sample — offer both modes
+
+For the first generation, offer a two-mode comparison so the user hears the difference once: (1) instrumental only (e.g. 「6分の作業用BGMを1曲」), (2) one vocal track with lyrics in the same style — you draft the lyrics per Lyrics (vocal mode); or both (2 requests = 4 tracks, ≈ 24 credits — usually within test credits). All tracks land in the same run directory and appear together in the report table. The consent gate is unchanged: estimates, balance, time and the consent options are still required before spending.
+
+## Output folder (first-run choice)
 ## Output folder (first-run choice)
 
 During onboarding (or anytime), ask once where downloaded tracks should go:
@@ -71,6 +76,13 @@ When the user cannot articulate a style, narrow it with three quick questions, t
 1. Scene / purpose: study, sleep, cafe, deep work...
 2. Mood: calm, warm, nostalgic, focused, melancholic...
 3. Instrument & tempo preference: e.g. piano + brushed drums slow, acoustic guitar folk, ambient pad drone...
+3. Instrument & tempo preference: e.g. piano + brushed drums slow, acoustic guitar folk, ambient pad drone...
+
+Present every question with 3–5 ready-made options labeled a/b/c/d/e (lowercase, but answers are case-insensitive — "A" works too), tuned to what the user already said (study BGM → a ambient pad / b lo-fi jazz / c acoustic folk / d piano solo / e free text). The user may answer with a single letter, a letter plus a tweak ("b, slower"), or free text — all are valid. If they have no direction at all, state which option you would pick and why instead of re-asking an open question. The count is flexible: 3–5 depending on how many genuinely distinct directions exist.
+
+If the request plausibly fits a vocal track, make one option a vocal/lyrics variant and route to the Lyrics (vocal mode) section.
+
+Before offering options, check `<output root>/log.jsonl` — if a previous run exists, make the FIRST option "a: same style as last time (<style text>)"; if the user references a past date or time, locate that batch by the `at` timestamp in `log.jsonl` and reuse its `style` / `planFile` parameters instead of re-asking. All option answers are case-insensitive.
 
 Composition formula: `<genre> with <instruments>, <texture>, <tempo> BPM, <mood> atmosphere`.
 Example: `Calm lo-fi jazz with soft piano, muted trumpet, brushed drums, warm vinyl texture, slow tempo around 70 BPM, relaxed late-night study atmosphere`.
@@ -107,6 +119,18 @@ Platform operation is this skill's core; the notes below are supplementary music
 - Keep mid-frequencies centred so speech stays intelligible over the track
 - Opening-first: the mood must land in the first 10 seconds
 
+### Lyrics (vocal mode)
+
+For vocal tracks (instrumental omitted or false, `lyrics` required), guide the writing instead of waiting for finished lyrics:
+
+1. Persona first: who listens, when, and the feeling to deliver (e.g. 「落ち込んでいたときに回復したい」) — the lyric theme comes from that wish; season and trending topics help
+2. Genre lyric conventions: before drafting, ask what themes the genre's hit lyrics share
+3. Structure tags inside `lyrics`: `[Verse]` / `[Chorus]` / `[Bridge]` / `[Outro]`; starting from the chorus is a valid style
+4. You draft the lyrics, the user edits — short lines, concrete imagery, singable phrasing
+5. Caveats: sensitive words fail the whole request (`SENSITIVE_WORD_ERROR` — no retry, credits refunded); keep the `style` text consistent with the lyric mood
+
+Source caveat: this guidance derives from pre-V6 Suno community experience. The process (persona → theme → structure tags → draft) carries over, but generation-behavior claims — AI vocal pronunciation quality, structure-tag effectiveness, how `style` text maps to the output — are unverified on the current V6 family: verify on a real run before asserting them to the user.
+
 **Judging the 2 delivered tracks**:
 - First 30 seconds decide; check for noise, muddy low-end, abrupt transitions
 - If both are unusable, re-generate as a new request (costs ~12 credits)
@@ -124,6 +148,7 @@ Platform operation is this skill's core; the notes below are supplementary music
 ## Step 4 — Titles
 
 - Auto-assign SHORT English titles based on the requested style, unless the user specified titles (Japanese titles are fine when the user asks).
+- Titles must be unique across ALL past runs: check with `node scripts/suno.js titles "<title>" "<title2>"` — the script answers USED/free per name; if USED, vary the title (add a mood or version word). The confirmation summary also warns automatically.
 - Titles must be unique within the batch, max 80 characters. Compose a `title2` for every request — a distinct varied form of `title` for the second track (same uniqueness and length rules). When `title2` is omitted, the second file falls back to the plan title with a `_v2` suffix.
 
 ## Step 5 — Compose the plan file
@@ -148,6 +173,12 @@ node scripts/suno.js generate --plan <plan-file>
 
 Without `--yes` this prints the confirmation summary (requests, estimated cost ≈ N × 12 credits, current balance) and spends nothing. Present the summary to the user and WAIT for explicit approval. Do not proceed on silence.
 
+Without `--yes` this prints the confirmation summary (requests, estimated cost ≈ N × 12 credits, current balance) and spends nothing. Present the summary to the user and WAIT for explicit approval. Do not proceed on silence.
+
+If the user hesitates, requests changes, or seems unsure, offer 3–5 concrete alternatives in the same labeled format (e.g., a keep as proposed / b different lead instrument / c calmer or more experimental mood / d shorter duration / e other free-text idea), then update the plan and re-present before asking for approval again. Keep every option to one line.
+
+The approval ask itself must present the whole run as ONE batch, stated per batch rather than as separate request counts: batch size (N requests = 2N tracks), total estimated credits for the batch (≈ requests × 12), current balance, and estimated wall-clock time (V6 family ≈ 3–4 min per request), then present consent options in the labeled format — a approve and start / b change the plan / c cancel. On a, submit and start polling (Step 8). On b, gather the change and re-present the updated plan; on c, stop with nothing spent.
+
 ## Step 7 — Execute in background
 
 ```bash
@@ -166,7 +197,7 @@ Relay the markdown table to the user each time (statuses: `queued` → `submitte
 
 ## Step 9 — Delivery
 
-Point the user to `report.md` in the run directory and list the downloaded `.mp3` paths. Summarize elapsed time and credits used. Past runs live under `output_music_kie_suno/<YYMMDD>/` (report.md + status.json); re-render any past run with `node scripts/suno.js status --dir <runDir>`.
+At completion the script prints the report after `=== REPORT ===` — relay it directly to the user in chat. The chat table is 曲名/長さ/ファイル only (the スタイル column is kept in `report.md` for space). The report contains `保存先:` — the absolute folder path; relay it verbatim (Claude / ChatGPT desktop apps detect local paths) and offer to open the folder for the user (`open <path>` on macOS, `explorer <path>` on Windows). Past runs live under `output_music_kie_suno/<YYMMDD>/` (report.md + status.json); re-render any past run with `node scripts/suno.js status --dir <runDir>`. For `--bg` detached runs the stdout block is lost — read `report.md` and relay the same content instead. Close the loop by reporting actuals against the estimate — actual elapsed time and actual credits used vs what was quoted at approval (e.g., "quoted 48 credits / ~12 min → actual 24.00 credits / 10 min").
 
 **Platform retention (~14 days):** generated audio remains downloadable on KIE.AI for only about 14 days and is then deleted from the platform. The local files in the output folder are the permanent copy — relay this to the user so they keep or back up tracks they care about; if local files are lost, re-download from the platform within the window or regenerate. Defer to the official KIE.AI pages for the current retention policy.
 
@@ -177,21 +208,46 @@ Point the user to `report.md` in the run directory and list the downloaded `.mp3
 | 5000 chars | 1000 chars | 80 chars | 10–360 s |
 
 Cost reference: ~12 credits per request (measured 2026-09; the script always shows the real balance delta; V6 family same price — operator-verified).
-## Usage statistics (`usage.jsonl`)
+## Generation log (`log.jsonl`)
 
-One JSON object per request is appended to `<output root>/usage.jsonl` after each batch (local only; gitignored). The schema is pinned — `v` increments only on a breaking field change:
+One JSON object per request is appended to `<output root>/log.jsonl` after each batch (local only; gitignored). The schema is pinned — `v` increments only on a breaking field change:
 
 | field | type | meaning |
 |---|---|---|
 | `v` | number | schema version; `1` (lines written before 0.4.0 lack this field) |
 | `at` | ISO 8601 string | batch finish time |
 | `title` | string | plan entry title (both tracks of a request share it — tell them apart via `files[]`) |
+| `style` | string \| null | plan style text — reuse for "same as last time" generation |
+| `model` / `instrumental` | string / boolean | model and instrumental flag as planned |
+| `durationReq` | number \| null | requested seconds (actual audio length may differ) |
+| `planFile` | string \| null | path to the plan markdown (full lyrics / prompt / parameters) |
 | `taskId` | string | KIE.AI task id |
 | `status` | string | `done` or `failed` |
 | `elapsedSec` | number | submission → completion seconds |
-| `tracks` | object[] | one object per downloaded track: `{file, title, url}` — `title` is the per-track title (`title2` when the plan provided one), `url` is the platform download URL (valid only within the ~14-day retention window) |
+| `tracks` | object[] | one object per downloaded track: `{file, title, url, durationSec}` — `title` is the per-track title (`title2` when the plan provided one), `url` is the platform download URL (valid only within the ~14-day retention window), `durationSec` is the API-reported track seconds (`null` when unavailable) |
 
-Examples: total generation time across history — `jq -s 'map(.elapsedSec // 0) | add' usage.jsonl`; every produced file — `jq -r '.files[]' usage.jsonl`.
+Examples: total generation time across history — `jq -s 'map(.elapsedSec // 0) | add' log.jsonl`; every produced file — `jq -r '.files[]' log.jsonl`.
+
+## Run file schemas (`status.json` / `report.md`)
+
+**`status.json`** — written to the run directory at start, on every credit refresh, and at completion; read by `node scripts/suno.js status` (resolves the latest run via `.lastrun`, or pass `--dir <runDir>`). Schema:
+
+| field | type | meaning |
+|---|---|---|
+| `startedAt` | ISO 8601 | run start time |
+| `outDir` | string | run directory |
+| `planFile` | string \| null | source plan markdown, when one was used |
+| `credits.start` / `credits.last` | number \| null | balance at run start / last observed |
+| `requests[]` | object[] | one per plan entry, same order as the plan |
+| `requests[].title` / `title2` | string / null | plan titles (`title2` names the second track) |
+| `requests[].style` / `durationReq` | string / number \| null | plan style text and requested seconds (actual audio length may differ) |
+| `requests[].model` / `instrumental` | string / boolean | as planned |
+| `requests[].status` | string | `queued` → `submitted` → `PENDING` / `TEXT_SUCCESS` / `FIRST_SUCCESS` → `done` / `failed` |
+| `requests[].taskId` `stage` `submittedAt` `completedAt` `elapsedSec` `error` | mixed | task id, poll stage, timestamps, duration, error text |
+| `requests[].files[]` | object[] | downloaded tracks: `{file, title, url, durationSec}` |
+| `updatedAt` | ISO 8601 | last write time |
+
+**`report.md`** — human receipt (Japanese) rendered at completion for non-engineer users. Fixed structure: `# 生成レポート <YYYY-MM-DD HH:mm>` + per-track table `| # | 曲名 | 長さ | ファイル | スタイル |` — 長さ shows the API-reported duration (約X分), else the requested seconds (要求X分（未確認）), else —; スタイル is the plan style — + spend line (credits and ~USD at $0.005/credit) + fixed memos (local backup, ~14-day platform retention, trim-longer-than-video advice, re-download URLs within the window, commercial-use note) + engineer footer `- credits: <before> -> <after> (used <delta>)`. Not machine-parsed — use `status.json` / `log.jsonl`. The per-request table (`| # | title | status | detail |`) remains the `status` command's rendering via `renderTable()`.
 
 
 Rate limit (official): each account allows at most 20 new generation requests per 10 seconds (≈ 100+ concurrent tasks). The script paces submissions through a sliding window at 18 requests / 10 s — leaving margin in case the user is also generating manually on the website. It also aborts before any submission when the balance is below the estimated total (~12/request), guaranteeing the whole batch is fundable before the first request is sent.

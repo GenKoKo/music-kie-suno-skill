@@ -12,7 +12,6 @@ const CREDIT_REF_PER_REQUEST = 12;
 const POLL_INTERVAL_MS = 5000;
 const POLL_CAP_MS = 600000; // per-task poll timeout (V6 360s tracks observed 171-215s; 10 min ~= 2.8x margin)
 const CREDIT_REFRESH_MS = 60000;
-const PROGRESS_EVERY_MS = 60000;
 const SUBMIT_RETRIES = 2;
 const SUBMIT_PACING = { maxPerWindow: 18, windowMs: 10000 }; // official limit 20 new requests / 10 s; 18 leaves margin for concurrent web use
 const V6_FAMILY = ['V6', 'V6_MINI', 'V6_WILD'];
@@ -234,9 +233,21 @@ function requestBody(entry) {
 }
 
 function newStatus(plan, outDir) {
-  return { startedAt: new Date().toISOString(), outDir: outDir, planFile: null, credits: { start: null, last: null }, requests: plan.map(p => ({ title: p.title, title2: p.title2 || null, model: p.model, instrumental: !!p.instrumental, status: 'queued', taskId: null, stage: '', submittedAt: null, completedAt: null, elapsedSec: null, files: [], error: null })) };
+  return { startedAt: new Date().toISOString(), outDir: outDir, planFile: null, credits: { start: null, last: null }, requests: plan.map(p => ({ title: p.title, title2: p.title2 || null, model: p.model, instrumental: !!p.instrumental, style: p.style || null, durationReq: p.duration || null, status: 'queued', taskId: null, stage: '', submittedAt: null, completedAt: null, elapsedSec: null, files: [], error: null })) };
 }
 function saveStatus(st, outDir) { st.updatedAt = new Date().toISOString(); fs.writeFileSync(path.join(outDir, 'status.json'), JSON.stringify(st, null, 2)); }
+function normTitle(s) { return String(s || '').toLowerCase().replace(/[_\-–—'’.,!?:;()「」・]/g, ' ').replace(/\s+/g, ' ').trim(); }
+function usedTitles() {
+  const f = path.join(sunoRoot(), 'log.jsonl');
+  if (!fs.existsSync(f)) return {};
+  const used = {};
+  fs.readFileSync(f, 'utf8').split('\n').forEach((line) => {
+    if (!line.trim()) return;
+    try { const j = JSON.parse(line); if (j.status !== 'done') return; (j.tracks || []).forEach((t) => { const k = normTitle(t.title); if (k && !used[k]) used[k] = { title: t.title, at: (j.at || '').slice(0, 10) }; }); } catch (e) {}
+  });
+  return used;
+}
+function proposedTitles(plan) { const t = []; plan.forEach((p) => { t.push(p.title); if (p.title2) t.push(p.title2); }); return t; }
 function renderTable(st) {
   const lines = ['| # | title | status | detail |', '|---|---|---|---|'];
   st.requests.forEach((r, i) => {
@@ -280,6 +291,10 @@ async function runGenerate(args) {
   if (!yes) {
     const lines = ['=== CONFIRMATION REQUIRED (re-run with --yes to proceed) ===', '', 'requests: ' + plan.length + ' (2 tracks each, ' + (plan.length * 2) + ' total)', 'model: ' + plan[0].model + (plan.every(p => p.model === plan[0].model) ? '' : ' (mixed)'), 'estimated cost: ~' + est + ' credits (' + CREDIT_REF_PER_REQUEST + ' per request, reference value)', 'current balance: ' + bal0 + ' credits', 'submit pacing: max ' + SUBMIT_PACING.maxPerWindow + ' requests / ' + (SUBMIT_PACING.windowMs / 1000) + 's (official account limit)', 'output dir: ' + outDir, '', 'per-request plan:', ...plan.map((p, i) => '  ' + (i + 1) + '. [' + (p.instrumental ? 'instrumental' : 'with vocals') + '] ' + p.title + ' — ' + (p.style || '').slice(0, 90) + (p.lyrics ? ' + lyrics(' + p.lyrics.length + ' chars)' : ''))];
     console.log(lines.join('\n'));
+    const used = usedTitles();
+    const seen = {};
+    const dup = proposedTitles(plan).filter((t) => { const k = normTitle(t); const hit = used[k] || seen[k]; seen[k] = 1; return hit; });
+    if (dup.length) console.log('⚠️ title check: ' + [...new Set(dup)].join(', ') + ' already used before — propose variants (list: node scripts/suno.js titles)');
     if (bal0 < est) { console.error('ERROR: ' + insufficientMsg(bal0, est, plan.length, billingUrl)); process.exit(1); }
     return;
   }
@@ -306,7 +321,6 @@ async function runGenerate(args) {
   }));
   const active = st.requests.map((r, i) => ({ r: r, i: i })).filter(x => x.r.status === 'submitted');
   log('polling ' + active.length + ' active tasks...');
-  let lastProgress = 0;
   let lastCreditAt = Date.now();
   const startMs = Date.now();
   for (;;) {
@@ -337,7 +351,7 @@ async function runGenerate(args) {
             const fname = trackFilename(r.model, tr.createTime, nnn, tTitle, t === 1 && !r.title2 ? t : 0);
             fs.writeFileSync(path.join(outDir, fname), bin);
             if (tr.id) r.downloadedIds[tr.id] = 1;
-            r.files.push({ file: fname, title: tTitle, url, bytes: bin.length });
+            r.files.push({ file: fname, title: tTitle, url, bytes: bin.length, durationSec: tr.duration != null ? Math.round(tr.duration) : null });
             log('[' + r.title + '] saved ' + fname + ' (' + (bin.length / 1048576).toFixed(1) + ' MB)');
           } catch (e) { log('[' + r.title + '] download failed: ' + e.message); }
         }
@@ -350,10 +364,6 @@ async function runGenerate(args) {
       if (v != null) { st.credits.last = v; lastCreditAt = Date.now(); }
     }
     saveStatus(st, outDir);
-    if (Date.now() - lastProgress >= PROGRESS_EVERY_MS) {
-      lastProgress = Date.now();
-      fs.writeFileSync(path.join(outDir, 'progress.md'), '# progress ' + new Date().toISOString() + '\n\n' + renderTable(st) + '\n');
-    }
     if (!pending) break;
     const totalElapsed = Date.now() - startMs;
     if (totalElapsed > 3600000) { log('global deadline reached'); break; }
@@ -362,11 +372,46 @@ async function runGenerate(args) {
   const balEnd = await fetchCredit(key);
   if (balEnd != null) st.credits.last = balEnd;
   saveStatus(st, outDir);
-  const lines = ['# generation report', '', '- finished: ' + new Date().toISOString(), '- credits: ' + bal0 + ' -> ' + st.credits.last + ' (used ' + (bal0 - st.credits.last).toFixed(2) + ')', '', renderTable(st)];
+  const fmtDur = (s) => s == null ? '—' : (s >= 60 ? '約' + Math.round(s / 60) + '分' : '約' + s + '秒');
+  const rows = [];
+  const chatRows = [];
+  const urls = [];
+  st.requests.forEach((r, ri) => {
+    const fallback = r.durationReq ? '要求' + Math.round(r.durationReq / 60) + '分（未確認）' : '—';
+    if (!r.files.length) { rows.push('| ' + (ri + 1) + ' | ' + r.title + ' | ' + (r.status === 'failed' ? '生成失敗' : fallback) + ' | — | ' + (r.style || '—') + ' |'); chatRows.push('| ' + (ri + 1) + ' | ' + r.title + ' | ' + (r.status === 'failed' ? '生成失敗' : fallback) + ' | — |'); return; }
+    r.files.forEach((f, fi) => {
+      const dur = f.durationSec != null ? fmtDur(f.durationSec) : (fi === 0 ? fallback : '—');
+      rows.push('| ' + (ri + 1) + '-' + (fi + 1) + ' | ' + f.title + ' | ' + dur + ' | ' + f.file + ' | ' + (r.style || '—') + ' |');
+      chatRows.push('| ' + (ri + 1) + '-' + (fi + 1) + ' | ' + f.title + ' | ' + dur + ' | ' + f.file + ' |');
+      if (f.url) urls.push(f.url);
+    });
+  });
+  const used = bal0 != null && st.credits.last != null ? (bal0 - st.credits.last).toFixed(2) : null;
+  const fin = new Date();
+  const p2 = (n) => String(n).padStart(2, '0');
+  const when = fin.getFullYear() + '-' + p2(fin.getMonth() + 1) + '-' + p2(fin.getDate()) + ' ' + p2(fin.getHours()) + ':' + p2(fin.getMinutes());
+  const usd = used == null ? '—' : '約 $' + (used * 0.005).toFixed(2);
+  const lines = ['# 生成レポート ' + when, '', '| # | 曲名 | 長さ | ファイル | スタイル |', '|---|---|---|---|---|'].concat(rows, [
+    '',
+    '- 保存先: ' + outDir,
+    '- 消費: ' + (used == null ? '不明' : used + 'クレジット（' + usd + '）') + ' ／ 残高: ' + (st.credits.last == null ? '不明' : st.credits.last + 'クレジット'),
+    '- 音源はこのフォルダに保存済み。KIE.AI 上は約14日で削除されるため、使う曲は早めにバックアップを',
+    '- 動画に使うなら、長さに少し余裕のある曲を選んで編集時にカットするのがおすすめです'
+  ]);
+  if (urls.length) lines.push('- 再ダウンロード URL（14日以内）:', ...urls.map(u => '  - ' + u));
+  lines.push('- 商用利用可（Suno 有償プランのライセンス規定に準拠）', '', '---', '- credits: ' + bal0 + ' -> ' + st.credits.last + ' (used ' + (bal0 - st.credits.last).toFixed(2) + ')');
+  const chat = ['# 生成レポート ' + when, '', '| # | 曲名 | 長さ | ファイル |', '|---|---|---|---|'].concat(chatRows, [
+    '',
+    '- 消費: ' + (used == null ? '不明' : used + 'クレジット（' + usd + '）') + ' ／ 残高: ' + (st.credits.last == null ? '不明' : st.credits.last + 'クレジット'),
+    '- 保存先: ' + outDir,
+    '- KIE.AI 上は約14日で削除されるため、使う曲は早めにバックアップを（再ダウンロードはエージェントに依頼できます）'
+  ]);
   fs.writeFileSync(path.join(outDir, 'report.md'), lines.join('\n') + '\n');
-  const usage = st.requests.map(r => JSON.stringify({ v: 1, at: new Date().toISOString(), title: r.title, taskId: r.taskId, status: r.status, elapsedSec: r.elapsedSec, tracks: (r.files || []).map(f => ({ file: f.file, title: f.title, url: f.url || null })) }));
-  fs.appendFileSync(path.join(sunoRoot(), 'usage.jsonl'), usage.join('\n') + '\n');
+  const usage = st.requests.map(r => JSON.stringify({ v: 1, at: new Date().toISOString(), title: r.title, style: r.style || null, model: r.model, instrumental: !!r.instrumental, durationReq: r.durationReq || null, planFile: st.planFile || null, taskId: r.taskId, status: r.status, elapsedSec: r.elapsedSec, tracks: (r.files || []).map(f => ({ file: f.file, title: f.title, url: f.url || null, durationSec: f.durationSec != null ? f.durationSec : null })) }));
+  fs.appendFileSync(path.join(sunoRoot(), 'log.jsonl'), usage.join('\n') + '\n');
   log('REPORT_READY: ' + path.join(outDir, 'report.md'));
+  console.log('=== REPORT ===');
+  console.log(chat.join('\n'));
 }
 
 function spawnBg(args) {
@@ -413,6 +458,14 @@ function parseArgs(argv) {
     await runGenerate(args);
   }
   else if (cmd === 'status') statusCmd(args);
+  else if (cmd === 'titles') {
+    const used = usedTitles();
+    const all = Object.entries(used);
+    console.log('unique titles so far: ' + all.length);
+    all.sort((x, y) => x[1].title.localeCompare(y[1].title)).forEach(([, v]) => console.log('  ' + v.title + (v.at ? '  (used ' + v.at + ')' : '')));
+    const checks = args._.slice(1);
+    checks.forEach((t) => console.log('check "' + t + '": ' + (used[normTitle(t)] ? 'USED (first ' + used[normTitle(t)].at + ')' : 'free')));
+  }
   else {
     console.log('Usage:\n  node suno.js credit                          – check remaining credits\n  node suno.js generate --plan <plan.md>       – print confirmation summary (no spend)\n  node suno.js generate --plan <plan.md> --yes --bg [--lang en]  – execute batch in background (billing link defaults to ja; --lang en for English)\n  node suno.js status [--dir <runDir>]         – render current batch status table\n  Env: KIE_AI_API_KEY (required) | OUTPUT_DIR_MUSIC_KIE_SUNO (optional custom output root)');
     if (cmd) die('unknown command: ' + cmd);
