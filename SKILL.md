@@ -1,6 +1,6 @@
 ---
 name: music-kie-suno
-description: Batch-generate AI music via the KIE.AI Suno API with credit-aware preflight, user-confirmed generation plans, live per-track progress tables, and auto-download with timestamped filenames. Use when the user wants to create songs, BGM, background music, jingles, or theme songs with Suno or KIE (e.g., "Sunoで曲を作って", "作業用BGMを作って", "勉強用BGMを10曲", "睡眠用BGMがほしい", "カフェ用BGM", "BGM生成して", "テーマソングを作って", "generate background music", "create a jingle with Suno", "背景音樂"). Triggers: music generation requests for study / sleep / cafe / work / video-channel use, batch BGM production, or any request mentioning Suno / KIE.AI music creation.
+description: 'Batch-generate AI music via the KIE.AI Suno API with credit-aware preflight, user-confirmed generation plans, live per-track progress tables, and auto-download with timestamped filenames. Use when the user wants to create songs, BGM, background music, jingles, or theme songs with Suno or KIE (e.g., "Sunoで曲を作って", "作業用BGMを作って", "勉強用BGMを10曲", "睡眠用BGMがほしい", "カフェ用BGM", "BGM生成して", "テーマソングを作って", "generate background music", "create a jingle with Suno", "背景音樂"). Triggers: music generation requests for study / sleep / cafe / work / video-channel use, batch BGM production, or any request mentioning Suno / KIE.AI music creation.'
 metadata:
   version: 0.5.2
 ---
