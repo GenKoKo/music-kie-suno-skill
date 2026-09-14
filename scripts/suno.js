@@ -25,7 +25,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const pad2 = n => String(n).padStart(2, '0');
 const pad3 = n => String(n).padStart(3, '0');
 const stampParts = d => { d = d || new Date(); return { date: String(d.getFullYear()).slice(2) + pad2(d.getMonth() + 1) + pad2(d.getDate()), time: pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()) }; };
-const sanitize = t => String(t).replace(/[^\w\s]/g, '').trim().replace(/\s+/g, '_').slice(0, 40) || 'track';
+const sanitize = t => String(t).replace(/[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, '').trim().replace(/\s+/g, '_').slice(0, 40) || 'track';
 const log = m => console.log('[' + new Date().toISOString() + '] ' + m);
 
 function loadKey() {
