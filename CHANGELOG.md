@@ -4,6 +4,7 @@ All notable changes to this skill are documented here — one file per version, 
 
 | version | date | contents | details |
 |---|---|---|---|
+| 0.5.4 | 2026-09-15 | safety: disk space pre-submit guard | [changelog/0.5.4.md](changelog/0.5.4.md) |
 | [0.5.3](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.3) | 2026-09-15 | fix: CJK titles preserved in track filenames | [changelog/0.5.3.md](changelog/0.5.3.md) |
 | [0.5.2](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.2) | 2026-09-13 | docs, report rework & file schemas, interaction guidance, agent naming | [changelog/0.5.2.md](changelog/0.5.2.md) |
 | 0.5.1 | 2026-09-12 | docs: install location & model clarifications | [changelog/0.5.1.md](changelog/0.5.1.md) |

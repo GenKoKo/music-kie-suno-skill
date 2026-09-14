@@ -181,6 +181,16 @@ function nextNNN(dir) {
   if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) { const m = f.match(/^suno-.+-(\d{3})-[^-]+\.mp3$/); if (m) max = Math.max(max, parseInt(m[1], 10)); }
   return max + 1;
 }
+const TRACK_MB_EST = 5; // observed 360s V6 = 4.3-5.0 MB; generous for shorter tracks
+function diskGuard(dir, requestCount) {
+  const needMB = requestCount * 2 * TRACK_MB_EST;
+  let probe = dir, freeMB = null;
+  for (let i = 0; i < 4 && freeMB === null && probe; i++) {
+    try { const s = fs.statfsSync(probe); freeMB = Math.floor(s.bavail * s.bsize / 1048576); } catch (e) { probe = path.dirname(probe); }
+  }
+  if (freeMB === null) return { needMB, freeMB: null, ok: true, warn: false, target: dir };
+  return { needMB, freeMB, ok: freeMB >= needMB, warn: freeMB < needMB * 3, target: probe };
+}
 function trackFilename(model, createdAtMs, nnn, title, variantIdx) {
   const ct = createdAtMs ? new Date(createdAtMs) : new Date();
   const s = stampParts(ct);
@@ -299,6 +309,9 @@ async function runGenerate(args) {
     return;
   }
   if (bal0 < est) die(insufficientMsg(bal0, est, plan.length, billingUrl));
+  const disk = diskGuard(outDir, plan.length);
+  if (!disk.ok) die('insufficient disk space for downloads: need ~' + disk.needMB + ' MB, free ' + (disk.freeMB === null ? '?' : disk.freeMB) + ' MB on ' + disk.target + ' — free up space or set OUTPUT_DIR_MUSIC_KIE_SUNO, then retry');
+  if (disk.warn) log('WARNING: free disk space (' + disk.freeMB + ' MB) is low for ~' + disk.needMB + ' MB of expected downloads');
   const st = newStatus(plan, outDir);
   st.credits.start = bal0; st.credits.last = bal0;
   saveStatus(st, outDir);
