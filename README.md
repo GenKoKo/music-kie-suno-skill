@@ -15,7 +15,7 @@ KIE.AI の Suno API を使って、AI 楽曲をバッチ生成するエージェ
 
 ## エージェント向けクイックスタート（AI エージェントが読む節）
 
-あなたが AI エージェント（Claude Code / ChatGPT / pi など）で、「Suno で曲を作って」という依頼を受けたなら、この節に沿って実行してください。ユーザーは多くの場合エンジニアではないため、ターミナル操作はすべてエージェント側で行い、ユーザーには意思決定（承認・課金）だけを頼みます。
+あなたが AI エージェント（Claude Code / ChatGPT / pi など）で、「Suno で曲を作って」という依頼を受けたなら、この節に沿って実行してください。ユーザーの最初の連絡が「このスキルの GitHub URL をインストールして、KIE.AI の onboarding も進めて」という内容の場合は、まず `npx skills add GenKoKo/music-kie-suno-skill` で導入してから、この節の preflight → onboarding に進みます。ユーザーは多くの場合エンジニアではないため、ターミナル操作はすべてエージェント側で行い、ユーザーには意思決定（承認・課金）だけを頼みます。
 
 1. **実行環境の検出**：`node --version` で Node.js の有無を確認します。**Node.js がある場合、このステップは黙ってスキップします**（インストールの話は切り出さない）。`npx` は Node.js に同梱されているため、Node がなければインストールもスキルの実行もできません。未インストールの場合は、ユーザーの OS を判定してインストールします：macOS → Homebrew があれば `brew install node`、なければ下の Step 3 の一行コマンド（公式 .pkg）をユーザーのターミナルで実行してもらいます（`sudo` のパスワード入力が必要なため、エージェント自身のシェルからは実行できません）；Windows（PowerShell）→ `winget install OpenJS.NodeJS.LTS`。サイトからの入手を希望する場合は、ユーザーの OS・CPU に合う公式インストーラ（macOS：.pkg ユニバーサル版／Windows：x64 の .msi。https://nodejs.org/en/download ）を案内します。インストール後、再確認します。
 2. **スキルのインストール**：`npx skills add GenKoKo/music-kie-suno-skill` をエージェント自身が実行します（ユーザーに実行させない）。インストール先はカレントディレクトリの `.agents/skills/music-kie-suno/`（skills.sh の既定動作）
