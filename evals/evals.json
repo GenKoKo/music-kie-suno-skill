@@ -1,0 +1,23 @@
+{
+  "skill_name": "music-kie-suno",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Sunoで作業用BGMを10曲作って",
+      "expected_output": "Agent runs credit preflight first, relays balance, presents a generation plan (V6 model, 10 tracks, style), then asks for explicit confirmation. No generation API call without approval.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "create a chill lofi jingle with Suno for my cafe",
+      "expected_output": "Same contract as eval 1 but single track, English trigger. Plan shows model choice and style; stops at confirmation gate.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "幫我用Suno做一首頻道主題曲",
+      "expected_output": "zh-TW trigger, single theme song. Credit-safe flow identical; agent replies in user's language and stops at confirmation gate.",
+      "files": []
+    }
+  ]
+}
