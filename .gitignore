@@ -16,4 +16,14 @@ CLAUDE.md
 *.swp
 .DS_Store
 
-# published post is tracked (docs/post/) — author-side drafts only go here if untracked
+# article lives on note; author-side copy stays local, not for skill installers
+docs/post/
+
+# images are note/gh-pages concerns; only the README cover rides in git
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+!docs/slides/p01.png
