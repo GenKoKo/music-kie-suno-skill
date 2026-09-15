@@ -178,7 +178,7 @@ function sunoRoot() { return path.join(baseDir(), 'output_music_kie_suno'); }
 function todayDir() { return path.join(sunoRoot(), stampParts().date); }
 function nextNNN(dir) {
   let max = 0;
-  if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) { const m = f.match(/^suno-.+-(\d{3})-[^-]+\.mp3$/); if (m) max = Math.max(max, parseInt(m[1], 10)); }
+  if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir)) { const m = f.match(/^suno-.+-(\d{3,})-[^-]+\.mp3$/); if (m) max = Math.max(max, parseInt(m[1], 10)); }
   return max + 1;
 }
 const TRACK_MB_EST = 5; // observed 360s V6 = 4.3-5.0 MB; generous for shorter tracks
