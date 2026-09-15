@@ -4,6 +4,7 @@ All notable changes to this skill are documented here — one file per version, 
 
 | version | date | contents | details |
 |---|---|---|---|
+| 0.5.6 | 2026-09-15 | feat: disk projection in confirmation gate | [changelog/0.5.6.md](changelog/0.5.6.md) |
 | [0.5.5](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.5) | 2026-09-15 | fix: track numbering continues past 999/day | [changelog/0.5.5.md](changelog/0.5.5.md) |
 | [0.5.4](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.4) | 2026-09-15 | safety: disk space pre-submit guard | [changelog/0.5.4.md](changelog/0.5.4.md) |
 | [0.5.3](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.3) | 2026-09-15 | fix: CJK titles preserved in track filenames | [changelog/0.5.3.md](changelog/0.5.3.md) |
