@@ -4,7 +4,7 @@ All notable changes to this skill are documented here — one file per version, 
 
 | version | date | contents | details |
 |---|---|---|---|
-| 0.5.8 | 2026-09-17 | chore: easier-to-click links | [changelog/0.5.8.md](changelog/0.5.8.md) |
+| [0.5.8](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.8) | 2026-09-17 | chore: easier-to-click links | [changelog/0.5.8.md](changelog/0.5.8.md) |
 | [0.5.7](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.7) | 2026-09-17 | fix: setup guide referral link | [changelog/0.5.7.md](changelog/0.5.7.md) |
 | [0.5.6](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.6) | 2026-09-15 | feat: disk projection in confirmation gate | [changelog/0.5.6.md](changelog/0.5.6.md) |
 | [0.5.5](https://github.com/GenKoKo/music-kie-suno-skill/releases/tag/v0.5.5) | 2026-09-15 | fix: track numbering continues past 999/day | [changelog/0.5.5.md](changelog/0.5.5.md) |
