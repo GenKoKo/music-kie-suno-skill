@@ -33,12 +33,14 @@ function loadKey() {
   if (!k) {
     console.error('ERROR: ' + KEY_ENV + ' is not set.\n' +
       'Setup guide:\n' +
-      '  1. Get your API key: https://kie.ai/api-key\n' +
-      '  2. Set it as an environment variable:\n' +
+      '  1. First time? Register via the referral link: https://kie.ai/ja?ref=dd95e71edb49afb16467a8523cbf31d8\n' +
+      '     (author referral link: a small commission is paid only if you register through it and make a payment in your first month; service and pricing are identical either way)\n' +
+      '  2. Get your API key: https://kie.ai/api-key\n' +
+      '  3. Set it as an environment variable:\n' +
       '       macOS / Linux : export ' + KEY_ENV + '=your_key      (then add it to ~/.zshrc or ~/.bashrc)\n' +
       '       Windows        : setx ' + KEY_ENV + ' your_key       (reopen the terminal)\n' +
       '     Tip: paste the key to your AI agent and say "set this up for me" — it writes the env var and verifies the balance.\n' +
-      '  3. Run the command again.');
+      '  4. Run the command again.');
     process.exit(1);
   }
   return k.trim();
