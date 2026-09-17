@@ -11,8 +11,6 @@
 
 常见问题（商用授权、计费、疑难解答等）整理在 **[FAQ.md](FAQ.md)**。
 
-🎬 **说明幻灯片**: [在浏览器打开](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 共 16 页，完整讲解 skill 的整体样貌（详见下方「说明幻灯片」章节）。
-
 ## 给 AI Agent 的快速开始（AI agent 请读这节）
 
 如果你是 AI agent（Claude Code / ChatGPT / pi 等），收到「用 Suno 做曲」这类请求时，请按照本节执行。用户的第一句话如果是「安装这个 skill 的 GitHub URL，并带我跑 KIE.AI 的 onboarding」，请先用 `npx skills add GenKoKo/music-kie-suno-skill` 安装，再进入本节的 preflight → onboarding。用户多半不是工程师，终端操作全部由 agent 执行，只请用户做决策（批准、付费）。
@@ -24,12 +22,6 @@
 5. **生成**：收到自然语言请求（例：「用 Suno 做 2 首 BGM」）后，依 余额确认 → 提出生成计划 → 用户明确批准（批准前不消耗任何 credits）→ 批量生成 → 进度回报与文件保存 的顺序进行。用户以曲数指定时，**1 个请求＝2 首**（同一计划的两个版本），请先换算成请求数（例：「3 首」→ 2 个请求＝4 首），并务必在创建计划前确认。完整操作契约在 `SKILL.md`，首次生成前务必阅读。
 
 # 以下为给人类（特别是非工程师用户）的说明，有兴趣再读。
-
-## 说明幻灯片
-
-![说明幻灯片 封面](docs/slides/p01.png)
-
-🎬 **共 16 页**: [在 GitHub Pages 打开](https://genkoko.github.io/music-kie-suno-skill/s/music-skill-deep-dive) — 依序讲解生成流程、V6 比较与安全设计。
 
 ## 安装
 
