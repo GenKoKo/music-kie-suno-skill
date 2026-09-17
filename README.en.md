@@ -1,6 +1,6 @@
 # music-kie-suno-skill
 
-![Version](https://img.shields.io/badge/version-0.5.6-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
+![Version](https://img.shields.io/badge/version-0.5.7-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
 ![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20ChatGPT%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **言語 / Language**: [日本語](README.md)｜English (this page)
