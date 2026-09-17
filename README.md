@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-0.5.8-blue) ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js) ![API](https://img.shields.io/badge/API-KIE.AI%20Suno-orange) ![Model](https://img.shields.io/badge/model-V6%20family-6aa84f)
 ![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Windows-informational) ![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20ChatGPT%20%7C%20pi-purple) ![License](https://img.shields.io/badge/license-MIT-green)
 
-**言語 / Language**: 日本語（このページ）｜[English](README.en.md)
+**言語 / Language**: 日本語（このページ）｜[English](README.en.md)｜[繁體中文](README.zh-TW.md)｜[简体中文](README.zh-CN.md)
 
 > **対応モデル：V6 ファミリーのみ**（既定は V6。V6_MINI／V6_WILD も選択可）。旧バージョン（V3_5〜V5_5）は KIE.AI で提供終了のため非対応です。
 
